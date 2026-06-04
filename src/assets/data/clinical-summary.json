@@ -1,0 +1,906 @@
+{
+    "generatedAt": "2025-12-21T14:45:12.985Z",
+    "patientInfo": {
+        "name": "Md. Kamal",
+        "age": "45",
+        "gender": "M",
+        "contact": "N/A"
+    },
+    "treatmentPeriod": {
+        "firstVisit": "2025-12-08T10:53:27.415Z",
+        "lastVisit": "2025-12-17T03:17:55.569Z",
+        "totalMonths": 0,
+        "totalPrescriptions": 5,
+        "totalDoctorsConsulted": 2,
+        "activeTreatments": 4,
+        "completedTreatments": 1
+    },
+    "clinicalTimeline": [
+        {
+            "periodLabel": "Month 1",
+            "startDate": "2025-12-08T10:53:27.415Z",
+            "endDate": "2025-12-17T03:17:55.569Z",
+            "monthsFromStart": 0,
+            "prescriptions": [
+                {
+                    "id": "6936ae27ed0b7842aa5a2068",
+                    "date": "2025-12-08T10:53:27.415Z",
+                    "doctor": {
+                        "name": "Muhammad Chanchal Azad",
+                        "specialization": "Psychiatry"
+                    }
+                },
+                {
+                    "id": "6937238de5ce76ef2d562056",
+                    "date": "2025-12-08T19:14:21.817Z",
+                    "doctor": {
+                        "name": "ABU SHAHIN",
+                        "specialization": "Rheumatology"
+                    }
+                },
+                {
+                    "id": "69416fbfa097ba2e7c614b33",
+                    "date": "2025-12-16T14:42:07.022Z",
+                    "doctor": {
+                        "name": "Muhammad Chanchal Azad",
+                        "specialization": "Psychiatry"
+                    }
+                },
+                {
+                    "id": "694183879cdad3975cd6bce2",
+                    "date": "2025-12-16T16:06:31.666Z",
+                    "doctor": {
+                        "name": "Muhammad Chanchal Azad",
+                        "specialization": "Psychiatry"
+                    }
+                },
+                {
+                    "id": "694220e34c2781c38b0f7928",
+                    "date": "2025-12-17T03:17:55.569Z",
+                    "doctor": {
+                        "name": "ABU SHAHIN",
+                        "specialization": "Rheumatology"
+                    }
+                }
+            ],
+            "symptoms": {
+                "reported": [
+                    "Wtloss and BP reduced",
+                    "Sloop at night for 6-7 hr",
+                    "balance problem",
+                    "depressive appearance",
+                    "Thinks about dead husband",
+                    "Feels fearful",
+                    "Pain and swelling of Small Joints",
+                    "Swelling of both Knees (R>L)",
+                    "bloody diarrhea",
+                    "urethral discharge",
+                    "DM",
+                    "HTN",
+                    "Dyslipidemia",
+                    "Family h/o psoriasis"
+                ],
+                "new": [
+                    "Wtloss and BP reduced",
+                    "Sloop at night for 6-7 hr",
+                    "balance problem",
+                    "depressive appearance",
+                    "Thinks about dead husband",
+                    "Feels fearful",
+                    "Pain and swelling of Small Joints",
+                    "Swelling of both Knees (R>L)",
+                    "bloody diarrhea",
+                    "urethral discharge",
+                    "DM",
+                    "HTN",
+                    "Dyslipidemia",
+                    "Family h/o psoriasis"
+                ],
+                "continuing": [],
+                "resolved": []
+            },
+            "diagnosis": [
+                "SPA (Reactive onset)"
+            ],
+            "medications": [
+                {
+                    "name": "Olanap",
+                    "dosage": "5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "15 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "7.5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Filfresh",
+                    "dosage": "3 mg",
+                    "frequency": "0+0+1",
+                    "duration": "2 months",
+                    "instructions": null
+                },
+                {
+                    "name": "Aritone Z",
+                    "dosage": "10 mi",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": null
+                },
+                {
+                    "name": "Aigecal Dx",
+                    "dosage": "600 mg+400 IU",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": null
+                },
+                {
+                    "name": "Tab. Fusid",
+                    "dosage": "40 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "TF",
+                    "instructions": "MfB"
+                },
+                {
+                    "name": "Tab. Vitabion",
+                    "dosage": "N/A",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Tab. Lospon",
+                    "dosage": "10 mg",
+                    "frequency": "0 + 3 + 0",
+                    "duration": "TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Tab. Escilex",
+                    "dosage": "10 ne",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Tab. Alurol",
+                    "dosage": "100 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Cap. Nexum",
+                    "dosage": "20 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "TF",
+                    "instructions": "Mf"
+                },
+                {
+                    "name": "Olanap",
+                    "dosage": "5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "15 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "7.5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Filfresh",
+                    "dosage": "3 mg",
+                    "frequency": "0+0+1",
+                    "duration": "2 months",
+                    "instructions": null
+                },
+                {
+                    "name": "Aritone Z",
+                    "dosage": "10 mi",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": "2 spoonfuls"
+                },
+                {
+                    "name": "Aigecal Dx",
+                    "dosage": "600 mg+400 IU",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": "1 tablet"
+                },
+                {
+                    "name": "Olanap",
+                    "dosage": "5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "15 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Mirtaz",
+                    "dosage": "7.5 mg",
+                    "frequency": "N/A",
+                    "duration": "N/A",
+                    "instructions": "continue"
+                },
+                {
+                    "name": "Filfresh",
+                    "dosage": "3 mg",
+                    "frequency": "0+0+1",
+                    "duration": "2 months",
+                    "instructions": null
+                },
+                {
+                    "name": "Aritone Z",
+                    "dosage": "10 mi",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": "2 spoonfuls"
+                },
+                {
+                    "name": "Aigecal Dx",
+                    "dosage": "600 mg+400 IU",
+                    "frequency": "daily",
+                    "duration": "1 months",
+                    "instructions": "1 tablet"
+                },
+                {
+                    "name": "Fusid",
+                    "dosage": "40 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "1 TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Vitabion",
+                    "dosage": "N/A",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "1 TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Lospon",
+                    "dosage": "10 mg",
+                    "frequency": "0 + 0 + 3",
+                    "duration": "1 TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Escilex",
+                    "dosage": "10 ne",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "1 TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Alurol",
+                    "dosage": "100 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "3 TF",
+                    "instructions": null
+                },
+                {
+                    "name": "Nexum",
+                    "dosage": "20 mg",
+                    "frequency": "3 + 0 + 0",
+                    "duration": "1 TF",
+                    "instructions": null
+                }
+            ],
+            "tests": {
+                "ordered": [
+                    {
+                        "name": "X-ray Chest P/A view",
+                        "type": null,
+                        "orderedDate": "2025-12-08T19:14:21.817Z"
+                    },
+                    {
+                        "name": "SGPT",
+                        "type": null,
+                        "orderedDate": "2025-12-08T19:14:21.817Z"
+                    },
+                    {
+                        "name": "X-ray Chest P/A view",
+                        "type": null,
+                        "orderedDate": "2025-12-17T03:17:55.569Z"
+                    },
+                    {
+                        "name": "SGPT",
+                        "type": null,
+                        "orderedDate": "2025-12-17T03:17:55.569Z"
+                    }
+                ],
+                "completed": [
+                    {
+                        "name": "SGPT",
+                        "type": null,
+                        "completedDate": "2025-12-20T03:05:51.888Z",
+                        "resultSummary": null,
+                        "notes": "hhkjhjkh"
+                    }
+                ]
+            },
+            "patientFeedback": {
+                "overallImprovement": 3,
+                "symptomRelief": 4,
+                "medicationEffectiveness": 5,
+                "sideEffects": 2,
+                "sideEffectsDescription": "123",
+                "healthConditionNow": "123",
+                "wasHelpful": true,
+                "wouldRecommend": true,
+                "additionalComments": ""
+            },
+            "clinicalNotes": [
+                "New symptoms reported: Wtloss and BP reduced, Sloop at night for 6-7 hr, balance problem, depressive appearance, Thinks about dead husband, Feels fearful, Pain and swelling of Small Joints, Swelling of both Knees (R>L), bloody diarrhea, urethral discharge, DM, HTN, Dyslipidemia, Family h/o psoriasis",
+                "Prescribed 30 medication(s)",
+                "1 test(s) completed",
+                "Patient improvement rating: 3/5",
+                "Side effects reported (severity: 4/5)"
+            ]
+        }
+    ],
+    "testResultsSummary": [
+        {
+            "testType": "SGPT",
+            "testName": "hhkjhjkh",
+            "results": [
+                {
+                    "date": "2025-12-20T03:05:51.888Z",
+                    "periodLabel": "Month 1",
+                    "status": "completed",
+                    "resultSummary": null,
+                    "notes": "hhkjhjkh"
+                }
+            ]
+        }
+    ],
+    "healthProgressionSummary": {
+        "initialSymptoms": [
+            "Wtloss and BP reduced",
+            "Sloop at night for 6-7 hr",
+            "balance problem",
+            "depressive appearance",
+            "Thinks about dead husband",
+            "Feels fearful",
+            "Pain and swelling of Small Joints",
+            "Swelling of both Knees (R>L)",
+            "bloody diarrhea",
+            "urethral discharge",
+            "DM",
+            "HTN",
+            "Dyslipidemia",
+            "Family h/o psoriasis"
+        ],
+        "currentSymptoms": [
+            "Wtloss and BP reduced",
+            "Sloop at night for 6-7 hr",
+            "balance problem",
+            "depressive appearance",
+            "Thinks about dead husband",
+            "Feels fearful",
+            "Pain and swelling of Small Joints",
+            "Swelling of both Knees (R>L)",
+            "bloody diarrhea",
+            "urethral discharge",
+            "DM",
+            "HTN",
+            "Dyslipidemia",
+            "Family h/o psoriasis"
+        ],
+        "resolvedSymptoms": [],
+        "persistentSymptoms": [
+            "Wtloss and BP reduced",
+            "Sloop at night for 6-7 hr",
+            "balance problem",
+            "depressive appearance",
+            "Thinks about dead husband",
+            "Feels fearful",
+            "Pain and swelling of Small Joints",
+            "Swelling of both Knees (R>L)",
+            "bloody diarrhea",
+            "urethral discharge",
+            "DM",
+            "HTN",
+            "Dyslipidemia",
+            "Family h/o psoriasis"
+        ],
+        "baselineCondition": "123",
+        "currentCondition": "123",
+        "improvementTrend": {
+            "overallScore": 3,
+            "trend": "insufficient_data",
+            "progressionData": [
+                {
+                    "period": "Month 1",
+                    "improvement": 3,
+                    "symptomRelief": 4
+                }
+            ]
+        },
+        "sideEffectsHistory": {
+            "totalReported": 1,
+            "averageSeverity": 4,
+            "descriptions": [
+                {
+                    "period": "Month 1",
+                    "severity": 4,
+                    "description": "123"
+                }
+            ]
+        }
+    },
+    "medicationAnalysis": [
+        {
+            "name": "Olanap",
+            "timesPrescribed": 3,
+            "periods": [
+                "Month 1",
+                "Month 1",
+                "Month 1"
+            ],
+            "totalDuration": "N/A, N/A, N/A",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Mirtaz",
+            "timesPrescribed": 6,
+            "periods": [
+                "Month 1",
+                "Month 1",
+                "Month 1",
+                "Month 1",
+                "Month 1",
+                "Month 1"
+            ],
+            "totalDuration": "N/A, N/A, N/A, N/A, N/A, N/A",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Filfresh",
+            "timesPrescribed": 3,
+            "periods": [
+                "Month 1",
+                "Month 1",
+                "Month 1"
+            ],
+            "totalDuration": "2 months, 2 months, 2 months",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Aritone Z",
+            "timesPrescribed": 3,
+            "periods": [
+                "Month 1",
+                "Month 1",
+                "Month 1"
+            ],
+            "totalDuration": "1 months, 1 months, 1 months",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Aigecal Dx",
+            "timesPrescribed": 3,
+            "periods": [
+                "Month 1",
+                "Month 1",
+                "Month 1"
+            ],
+            "totalDuration": "1 months, 1 months, 1 months",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Tab. Fusid",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Tab. Vitabion",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Tab. Lospon",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Tab. Escilex",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Tab. Alurol",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Cap. Nexum",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Fusid",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "1 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Vitabion",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "1 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Lospon",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "1 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Escilex",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "1 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Alurol",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "3 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        },
+        {
+            "name": "Nexum",
+            "timesPrescribed": 1,
+            "periods": [
+                "Month 1"
+            ],
+            "totalDuration": "1 TF",
+            "effectiveness": 5,
+            "associatedSymptoms": [
+                "Wtloss and BP reduced",
+                "Sloop at night for 6-7 hr",
+                "balance problem",
+                "depressive appearance",
+                "Thinks about dead husband",
+                "Feels fearful",
+                "Pain and swelling of Small Joints",
+                "Swelling of both Knees (R>L)",
+                "bloody diarrhea",
+                "urethral discharge",
+                "DM",
+                "HTN",
+                "Dyslipidemia",
+                "Family h/o psoriasis"
+            ]
+        }
+    ],
+    "clinicalObservations": [
+        "14 persistent symptom(s) require continued monitoring: Wtloss and BP reduced, Sloop at night for 6-7 hr, balance problem",
+        "Significant side effects reported. Average severity: 4/5",
+        "Highly effective medications: Olanap, Mirtaz, Filfresh"
+    ],
+    "aiNarrative": "## Clinical Summary: Md. Kamal\n\n**Patient:** Md. Kamal\n**Age:** 45\n**Gender:** M\n**Treatment Period:** 12/08/2025 - 12/17/2025 (Duration: 0 months)\n**Total Prescriptions:** 5\n**Doctors Consulted:** Muhammad Chanchal Azad (Psychiatry), ABU SHAHIN (Rheumatology)\n\n**Presenting Complaints & Initial Assessment (12/08/2025):**\n\nMd. Kamal, a 45-year-old male, presented on 12/08/2025 reporting a constellation of symptoms including weight loss, reduced blood pressure (BP), disturbed sleep (6-7 hours per night), balance problems, depressive appearance, persistent thoughts related to the death of his husband, feelings of fearfulness, pain and swelling of small joints, bilateral knee swelling (right greater than left), bloody diarrhea, and urethral discharge. His medical history is significant for Diabetes Mellitus (DM), Hypertension (HTN), and Dyslipidemia. He also reports a family history of psoriasis.\n\nGiven the reported symptoms, consultations were sought from both Psychiatry (Dr. Muhammad Chanchal Azad) and Rheumatology (Dr. ABU SHAHIN). Differential diagnoses considered included reactive depression, inflammatory arthritis, and potential infectious etiologies contributing to the gastrointestinal and genitourinary symptoms.\n\n**Diagnostic Assessment & Initial Treatment Plan (12/08/2025):**\n\nBased on the initial presentation, a preliminary diagnosis of SPA (Reactive onset) was made. Relevant laboratory investigations were ordered, including SGPT, with the understanding that further investigations would be guided by the initial results and the assessments of the Rheumatology and Psychiatry consultants.\n\nAn initial medication regimen was prescribed, consisting of:\n*   Olanap 5 mg (Antipsychotic/Mood Stabilizer)\n*   Mirtaz 15 mg (Antidepressant)\n*   Mirtaz 7.5 mg (Antidepressant) - *Note: Potential for dosage duplication, needs clarification.*\n*   Filfresh 3 mg (Likely a brand name, indication needs clarification)\n*   Aritone Z 10 mi (Likely a brand name, indication needs clarification)\n\nThe patient was instructed to return for follow-up appointments with both Psychiatry and Rheumatology to further evaluate his condition and assess the effectiveness of the prescribed medications.\n\n**Follow-up & Monitoring (12/08/2025 - 12/17/2025):**\n\nDuring the short follow-up period (9 days), the patient reported an overall improvement score of 3/5, symptom relief of 4/5, and medication effectiveness of 5/5. However, he also reported significant side effects, with an average severity of 2/5. The specific nature of these side effects was not documented in the provided data, requiring further investigation.\n\nDespite reported improvement, the patient's initial symptoms remained persistent. These included: Wtloss and BP reduced, Sloop at night for 6-7 hr, balance problem, depressive appearance, Thinks about dead husband, Feels fearful, Pain and swelling of Small Joints, Swelling of both Knees (R>L), bloody diarrhea, urethral discharge, DM, HTN, Dyslipidemia, Family h/o psoriasis. His baseline and current condition were both recorded as \"123\", which is non-specific and requires clarification.\n\n**Test Results & Analysis:**\n\nSGPT was completed on 12/20/2025. The result itself was not provided. Elevated SGPT would warrant further investigation into potential liver dysfunction, drug-induced hepatotoxicity (given the polypharmacy), or other hepatic pathologies. This result is crucial for guiding ongoing management.\n\n**Medication Analysis:**\n\nThe top medications prescribed during this period were:\n\n*   Olanap (3 times): Reported effectiveness 5/5.\n*   Mirtaz (6 times): Reported effectiveness 5/5. *Note the potential dosage duplication.*\n*   Filfresh (3 times): Reported effectiveness 5/5. *Indication unclear.*\n*   Aritone Z (3 times): Reported effectiveness 5/5. *Indication unclear.*\n\nOther medications prescribed once each included: Aigecal Dx, Tab. Fusid, Tab. Vitabion, Tab. Lospon, Tab. Escilex, and Tab. Alurol. The indications for these medications need to be clarified, and potential drug interactions should be carefully evaluated, given the patient’s existing medical conditions and current medication regimen. The reported effectiveness of the medications is encouraging, however, the significant side effects reported require further investigation and may necessitate dose adjustments or alternative therapies.\n\n**Overall Health Progression & Patient Response:**\n\nWhile the patient reported some subjective improvement, the persistence of his initial symptoms raises concerns. The inconsistent documentation (\"insufficient_data\" for overall improvement trend and the non-specific \"123\" for baseline and current condition) hinders a comprehensive assessment of his progress.\n\n**Clinical Insights & Recommendations:**\n\n1.  **Clarify Medication Regimen:** Confirm the dosages of Mirtaz and identify the indications for Filfresh, Aritone Z, and the other less frequently prescribed medications. A complete medication reconciliation is crucial.\n2.  **Investigate Side Effects:** Elicit detailed information regarding the nature and severity of the reported side effects. This will guide decisions regarding dose adjustments or alternative therapies.\n3.  **Obtain and Review SGPT Result:** The SGPT result is critical for assessing liver function and potential drug-induced hepatotoxicity.\n4.  **Further Diagnostic Evaluation:** Conduct further investigations to address the persistent symptoms, particularly the bloody diarrhea and urethral discharge. This may include stool cultures, urine analysis, and referral to gastroenterology and urology specialists.\n5.  **Address Rheumatological Concerns:** Thoroughly evaluate the joint pain and swelling, considering potential inflammatory arthropathies. Further rheumatological workup may be indicated.\n6.  **Optimize Management of Comorbidities:** Ensure optimal control of DM, HTN, and Dyslipidemia.\n7.  **Psychiatric Follow-up:** Continue psychiatric follow-up for ongoing management of depression and anxiety related to the loss of his husband. Consider exploring grief counseling or other therapeutic interventions.\n8.  **Improve Documentation:** Ensure accurate and comprehensive documentation of patient symptoms, examination findings, test results, medication details, and progress. Specifically, avoid using non-specific values like \"123\" for condition assessment.\n\n**Prognosis:**\n\nThe prognosis for Md. Kamal depends on the accurate diagnosis and effective management of his multiple medical and psychiatric conditions. Close monitoring, careful medication management, and a multidisciplinary approach are essential for improving his overall health and quality of life. Further investigation and clarification of the existing documentation are paramount to providing optimal care.\n"
+}

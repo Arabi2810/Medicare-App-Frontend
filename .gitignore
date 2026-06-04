@@ -1,0 +1,38 @@
+@"
+# Environment
+.env
+.env.*
+
+# Firebase
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Keystore
+android/app/*.keystore
+android/app/*.jks
+
+# Dependencies
+node_modules/
+
+# Build outputs
+android/app/build/
+android/build/
+ios/build/
+ios/Pods/
+
+# Metro
+.metro-health-check*
+
+# React Native
+*.orig.*
+web-build/
+
+# Misc
+.DS_Store
+*.log
+"@ | Out-File -FilePath ".gitignore" -Encoding utf8
+android/.gradle/
+
+android/app/.cxx/
+android/app/build/
+android/build/
