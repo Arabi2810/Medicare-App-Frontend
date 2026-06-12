@@ -74,6 +74,11 @@ export const isArrayOfStrings = (value: any): boolean => {
  * Check if field should be skipped
  */
 export const shouldSkipField = (key: string): boolean => {
-    const skipFields = ['ocrText', 'isCurrent', 'imageUrl'];
+    const skipFields = [
+        'ocrText', 'isCurrent', 'imageUrl',
+        '_id', '__v', 'id', 'userId', 'user_id',
+        'status', 'processingStatus', 'isComplete', 'completedAt',
+        'uploadedAt', 'parsedAt', 'createdAt', 'updatedAt',
+    ];
     return skipFields.includes(key);
 };

@@ -20,8 +20,8 @@ interface Props {
 const TAB_FILENAMES: Record<TabType, string> = {
   summary: 'ClinicalSummary',
   sideEffects: 'SideEffects',
-  analytics: 'HealthTimeline',
-  healthRecord: 'CaseDocumentation',
+  analytics: 'Analytics',
+  healthRecord: 'HealthRecord',
 };
 
 const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess, activeTab, tabData }) => {

@@ -67,19 +67,26 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
     }
   };
 
+// Replace handleSave with:
 const handleSave = async () => {
+  let saveSucceeded = false;
   try {
     await updateReminder({
       reminderId: item._id,
       data: { timings, dosage },
     }).unwrap();
+    saveSucceeded = true;
+  } catch (error) {
+    showToast('Failed to update reminder', 'error');
+    return;
+  }
 
-    // Cancel all existing alarms for this reminder
+  // Reschedule alarms in a SEPARATE try/catch so it can't override the save success
+  try {
     await notifee.cancelNotification(`reminder-${item._id}-morning`);
     await notifee.cancelNotification(`reminder-${item._id}-noon`);
     await notifee.cancelNotification(`reminder-${item._id}-night`);
 
-    // Reschedule based on new timings/schedules
     const slots: Array<['morning' | 'noon' | 'night', string | undefined]> = [
       ['morning', timings?.morning],
       ['noon', timings?.noon],
@@ -118,12 +125,13 @@ const handleSave = async () => {
         },
       );
     }
-
-    showToast('Reminder updated successfully', 'success');
-    setShowEdit(false);
-  } catch (error) {
-    showToast('Failed to update reminder', 'error');
+    console.log(`✅ Alarms rescheduled for reminder ${item._id}`);
+  } catch (e) {
+    console.warn('Alarm reschedule failed:', e);
   }
+  
+  showToast('Reminder updated successfully', 'success');
+  setShowEdit(false);
 };
   const showThreeDotMenu = () => {
     if (Platform.OS === 'ios') {

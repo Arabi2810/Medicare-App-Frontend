@@ -24,6 +24,9 @@ const ToastBridge: React.FC = () => {
 };
 
 async function createNotificationChannel() {
+  await notifee.deleteChannel('alarm_channel');
+  await notifee.deleteChannel('medication_reminders');
+
   await notifee.createChannel({
     id: 'medication_reminders',
     name: 'Medication Reminders',

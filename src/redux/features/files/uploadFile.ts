@@ -27,7 +27,7 @@ export const uploadFileApi = apiSlice.injectEndpoints({
           body: payload,
         };
       },
-      invalidatesTags: ['ActiveMedications', 'Reminders', 'Prescriptions', 'Analytics'],
+      invalidatesTags: ['ActiveMedications', 'Reminders', 'Prescriptions', 'Analytics', 'PendingTests'],
     }),
   }),
 });
