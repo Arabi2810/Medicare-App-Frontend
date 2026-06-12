@@ -36,10 +36,10 @@ const ProfileDrawer: React.FC<DrawerContentComponentProps> = props => {
             )}
           </View>
           <MediCareText tag="h3" weight={FontWeight.SemiBold} color={theme.white} style={{ marginTop: 12 }}>
-            {user?.fullName}
+            {user?.fullName ?? 'Guest'}
           </MediCareText>
           <MediCareText tag="body" color={theme.whiteTransparent}>
-            {user?.email}
+            {user?.email ?? ''}
           </MediCareText>
 
           {/* Blood Group Badge */}

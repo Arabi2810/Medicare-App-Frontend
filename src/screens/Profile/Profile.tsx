@@ -1,3 +1,4 @@
+// src/screens/Profile/Profile.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -5,14 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  Alert,
   Modal,
 } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import { makeStyles } from '@src/hooks/makeStyle';
 import MediCareText, { FontWeight } from '@src/components/Text/MediCareText';
 import MediCareInput from '@src/components/Input/MediCareInput';
-import MediCareButton, { ButtonType } from '@src/components/Button/MediCareButton';
 import { useGetProfileQuery, useUpdateProfileMutation } from '@src/redux/features/user/userApi';
 import { nameInitials } from '@src/helper/nameInitials';
 import { CloseSvg } from '@src/utils/icons';
@@ -25,10 +24,13 @@ import { useAppSelector } from '@src/redux/store';
 import { useDeleteAccountMutation } from '@src/redux/features/user/userApi';
 import { logout } from '@src/redux/features/user/authSlice';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useToast } from '@src/components/Toast/ToastProvider';
+import { Alert } from 'react-native'; // only for destructive confirmations
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-// Password strength checker
+// ─── Password strength ────────────────────────────────────────────────────────
+
 const checkPasswordStrength = (password: string) => ({
   minLength: password.length >= 8,
   hasUppercase: /[A-Z]/.test(password),
@@ -38,12 +40,12 @@ const checkPasswordStrength = (password: string) => ({
 });
 
 const PasswordStrengthIndicator = ({ password }: { password: string }) => {
-  const theme = useTheme();
   const checks = checkPasswordStrength(password);
   const passed = Object.values(checks).filter(Boolean).length;
-
-  const strengthColor = passed <= 2 ? '#ef4444' : passed <= 3 ? '#f97316' : passed <= 4 ? '#eab308' : '#22c55e';
-  const strengthLabel = passed <= 2 ? 'Weak' : passed <= 3 ? 'Fair' : passed <= 4 ? 'Good' : 'Strong';
+  const strengthColor =
+    passed <= 2 ? '#ef4444' : passed <= 3 ? '#f97316' : passed <= 4 ? '#eab308' : '#22c55e';
+  const strengthLabel =
+    passed <= 2 ? 'Weak' : passed <= 3 ? 'Fair' : passed <= 4 ? 'Good' : 'Strong';
 
   if (!password) return null;
 
@@ -86,11 +88,14 @@ const PasswordStrengthIndicator = ({ password }: { password: string }) => {
   );
 };
 
+// ─── Profile screen ───────────────────────────────────────────────────────────
+
 const Profile = () => {
   const theme = useTheme();
   const styles = useStyles();
   const navigation = useNavigation();
-  const { data, isLoading, refetch } = useGetProfileQuery({});
+  const { showToast } = useToast();
+  const { data, isLoading } = useGetProfileQuery({});
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
   const [deleteAccount] = useDeleteAccountMutation();
   const dispatch = useAppDispatch();
@@ -108,20 +113,20 @@ const Profile = () => {
   const [allergies, setAllergies] = useState('');
   const [chronicConditions, setChronicConditions] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
-  const [address, setAddress] = useState('');
+  const [medicalNotes, setMedicalNotes] = useState('');
 
   // Modals
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // Password change fields
+  // Password change
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  // Email change fields
+  // Email change
   const [newEmail, setNewEmail] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
@@ -148,13 +153,14 @@ const Profile = () => {
       setAllergies(user.profile?.allergies?.join(', ') || '');
       setChronicConditions(user.profile?.chronicConditions?.join(', ') || '');
       setEmergencyContact(user.profile?.emergencyContact || '');
-      setAddress(user.profile?.address || '');
+      // Medical notes stored in address field on backend until backend updated
+      setMedicalNotes(user.profile?.address || '');
     }
   }, [user]);
 
   const handleSave = async () => {
     try {
-      const result = await updateProfile({
+      await updateProfile({
         fullName,
         bloodGroup,
         gender,
@@ -164,27 +170,25 @@ const Profile = () => {
         allergies: allergies.split(',').map(a => a.trim()).filter(Boolean),
         chronicConditions: chronicConditions.split(',').map(c => c.trim()).filter(Boolean),
         emergencyContact,
-        address,
+        address: medicalNotes, // mapped to address field until backend adds medicalNotes
       }).unwrap();
 
-    
-      dispatch(setAccessToken({
-        token: authState.token,
-        user: {
-          ...authState.user!,
-          fullName: fullName,
-        },
-        hydrated: true,
-      }));
+      dispatch(
+        setAccessToken({
+          token: authState.token,
+          user: { ...authState.user!, fullName },
+          hydrated: true,
+        }),
+      );
 
-    Alert.alert('Success', 'Profile updated successfully');
-  } catch {
-    Alert.alert('Error', 'Failed to update profile');
-  }
-};
+      showToast('Profile saved successfully', 'success');
+    } catch {
+      showToast('Failed to save profile. Please try again.', 'error');
+    }
+  };
 
   const handleDeleteAccount = () => {
-    console.log('TOKEN:', authState.token);
+    // Destructive action — native Alert is appropriate here (needs explicit confirmation)
     Alert.alert(
       'Delete Account',
       'This will permanently delete your account and all your prescriptions, reminders, and data. This cannot be undone.',
@@ -194,18 +198,18 @@ const Profile = () => {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await deleteAccount({}).unwrap();
-              // Sign out from Firebase
-              await auth().signOut();
-              try { await GoogleSignin.signOut(); } catch {}
-              dispatch(logout());
-            } catch {
-              Alert.alert('Error', 'Failed to delete account. Please try again.');
+              try {
+                await deleteAccount({}).unwrap();
+                await auth().signOut();
+                try { await GoogleSignin.signOut(); } catch {}
+                dispatch(logout());
+                navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as never);
+              } catch {
+                showToast('Failed to delete account. Please try again.', 'error');
+              }
             }
-          },
         },
-      ]
+      ],
     );
   };
 
@@ -214,9 +218,9 @@ const Profile = () => {
       setVerifyLoading(true);
       await firebaseUser?.sendEmailVerification();
       setVerificationSent(true);
-      Alert.alert('Sent', 'Verification email sent. Check your inbox.');
+      showToast('Verification email sent. Check your inbox.', 'success');
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to send verification email');
+      showToast(e.message || 'Failed to send verification email', 'error');
     } finally {
       setVerifyLoading(false);
     }
@@ -224,35 +228,33 @@ const Profile = () => {
 
   const handlePasswordChange = async () => {
     const checks = checkPasswordStrength(newPassword);
-    const allPassed = Object.values(checks).every(Boolean);
-    if (!allPassed) {
-      Alert.alert('Weak Password', 'Password must meet all requirements shown below.');
+    if (!Object.values(checks).every(Boolean)) {
+      showToast('Password must meet all requirements shown below.', 'warning');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Mismatch', 'Passwords do not match.');
+      showToast('Passwords do not match.', 'error');
       return;
     }
     try {
       setPasswordLoading(true);
-      // Re-authenticate first
       const credential = auth.EmailAuthProvider.credential(
         firebaseUser?.email || '',
-        currentPassword
+        currentPassword,
       );
       await firebaseUser?.reauthenticateWithCredential(credential);
       await firebaseUser?.updatePassword(newPassword);
-      Alert.alert('Success', 'Password changed successfully.');
+      showToast('Password changed successfully.', 'success');
       setShowPasswordModal(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (e: any) {
-      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        Alert.alert('Error', 'Current password is incorrect.');
-      } else {
-        Alert.alert('Error', e.message || 'Failed to change password');
-      }
+      const msg =
+        e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+          ? 'Current password is incorrect.'
+          : e.message || 'Failed to change password';
+      showToast(msg, 'error');
     } finally {
       setPasswordLoading(false);
     }
@@ -260,30 +262,27 @@ const Profile = () => {
 
   const handleEmailChange = async () => {
     if (!newEmail.includes('@')) {
-      Alert.alert('Invalid', 'Please enter a valid email address.');
+      showToast('Please enter a valid email address.', 'warning');
       return;
     }
     try {
       setEmailLoading(true);
       const credential = auth.EmailAuthProvider.credential(
         firebaseUser?.email || '',
-        emailPassword
+        emailPassword,
       );
       await firebaseUser?.reauthenticateWithCredential(credential);
       await firebaseUser?.verifyBeforeUpdateEmail(newEmail);
-      Alert.alert(
-        'Verification Sent',
-        `A verification link was sent to ${newEmail}. Click it to confirm the email change.`
-      );
+      showToast(`Verification link sent to ${newEmail}.`, 'success');
       setShowEmailModal(false);
       setNewEmail('');
       setEmailPassword('');
     } catch (e: any) {
-      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        Alert.alert('Error', 'Current password is incorrect.');
-      } else {
-        Alert.alert('Error', e.message || 'Failed to change email');
-      }
+      const msg =
+        e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+          ? 'Current password is incorrect.'
+          : e.message || 'Failed to change email';
+      showToast(msg, 'error');
     } finally {
       setEmailLoading(false);
     }
@@ -291,17 +290,17 @@ const Profile = () => {
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.includes('@')) {
-      Alert.alert('Invalid', 'Enter a valid email address.');
+      showToast('Enter a valid email address.', 'warning');
       return;
     }
     try {
       setForgotLoading(true);
       await auth().sendPasswordResetEmail(forgotEmail);
-      Alert.alert('Sent', `Password reset link sent to ${forgotEmail}. Check your inbox.`);
+      showToast(`Reset link sent to ${forgotEmail}.`, 'success');
       setShowForgotModal(false);
       setForgotEmail('');
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to send reset email');
+      showToast(e.message || 'Failed to send reset email', 'error');
     } finally {
       setForgotLoading(false);
     }
@@ -333,7 +332,7 @@ const Profile = () => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Avatar Section */}
+        {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
             {user?.profile?.profilePhoto ? (
@@ -386,30 +385,12 @@ const Profile = () => {
             <MediCareText tag="h4" weight={FontWeight.SemiBold} color={theme.text[110]} style={styles.sectionTitle}>
               Basic Information
             </MediCareText>
-            <MediCareInput
-              label="Full Name"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="Your full name"
-              containerStyle={styles.input}
-            />
-            <MediCareInput
-              label="Date of Birth"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-              placeholder="DD/MM/YYYY"
-              containerStyle={styles.input}
-            />
-            <MediCareText tag="body" weight={FontWeight.Medium} color={theme.text[110]} style={styles.label}>
-              Gender
-            </MediCareText>
+            <MediCareInput label="Full Name" value={fullName} onChangeText={setFullName} placeholder="Your full name" containerStyle={styles.input} />
+            <MediCareInput label="Date of Birth" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="DD/MM/YYYY" containerStyle={styles.input} />
+            <MediCareText tag="body" weight={FontWeight.Medium} color={theme.text[110]} style={styles.label}>Gender</MediCareText>
             <View style={styles.chipRow}>
               {['M', 'F', 'Other'].map(g => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.chip, gender === g && styles.chipActive]}
-                  onPress={() => setGender(g)}
-                >
+                <TouchableOpacity key={g} style={[styles.chip, gender === g && styles.chipActive]} onPress={() => setGender(g)}>
                   <MediCareText tag="body" weight={FontWeight.Medium} color={gender === g ? theme.white : theme.text[110]}>
                     {g === 'M' ? 'Male' : g === 'F' ? 'Female' : 'Other'}
                   </MediCareText>
@@ -417,22 +398,8 @@ const Profile = () => {
               ))}
             </View>
             <View style={styles.row}>
-              <MediCareInput
-                label="Height (cm)"
-                value={height}
-                onChangeText={setHeight}
-                placeholder="170"
-                keyboardType="numeric"
-                containerStyle={[styles.input, { flex: 1, marginRight: 8 }]}
-              />
-              <MediCareInput
-                label="Weight (kg)"
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="65"
-                keyboardType="numeric"
-                containerStyle={[styles.input, { flex: 1 }]}
-              />
+              <MediCareInput label="Height (cm)" value={height} onChangeText={setHeight} placeholder="170" keyboardType="numeric" containerStyle={[styles.input, { flex: 1, marginRight: 8 }]} />
+              <MediCareInput label="Weight (kg)" value={weight} onChangeText={setWeight} placeholder="65" keyboardType="numeric" containerStyle={[styles.input, { flex: 1 }]} />
             </View>
           </View>
 
@@ -441,40 +408,28 @@ const Profile = () => {
             <MediCareText tag="h4" weight={FontWeight.SemiBold} color={theme.text[110]} style={styles.sectionTitle}>
               Medical Information
             </MediCareText>
-            <MediCareText tag="body" weight={FontWeight.Medium} color={theme.text[110]} style={styles.label}>
-              Blood Group
-            </MediCareText>
+            <MediCareText tag="body" weight={FontWeight.Medium} color={theme.text[110]} style={styles.label}>Blood Group</MediCareText>
             <View style={styles.chipRow}>
               {BLOOD_GROUPS.map(bg => (
-                <TouchableOpacity
-                  key={bg}
-                  style={[styles.chip, bloodGroup === bg && styles.chipActive]}
-                  onPress={() => setBloodGroup(bg)}
-                >
-                  <MediCareText tag="body" weight={FontWeight.Medium} color={bloodGroup === bg ? theme.white : theme.text[110]}>
-                    {bg}
-                  </MediCareText>
+                <TouchableOpacity key={bg} style={[styles.chip, bloodGroup === bg && styles.chipActive]} onPress={() => setBloodGroup(bg)}>
+                  <MediCareText tag="body" weight={FontWeight.Medium} color={bloodGroup === bg ? theme.white : theme.text[110]}>{bg}</MediCareText>
                 </TouchableOpacity>
               ))}
             </View>
+            <MediCareInput label="Allergies" value={allergies} onChangeText={setAllergies} placeholder="Penicillin, Aspirin, Dust (comma separated)" multiline numberOfLines={2} containerStyle={styles.input} />
+            <MediCareInput label="Chronic Conditions" value={chronicConditions} onChangeText={setChronicConditions} placeholder="Diabetes, Hypertension (comma separated)" multiline numberOfLines={2} containerStyle={styles.input} />
             <MediCareInput
-              label="Allergies"
-              value={allergies}
-              onChangeText={setAllergies}
-              placeholder="Penicillin, Aspirin, Dust (comma separated)"
+              label="Medical Notes"
+              value={medicalNotes}
+              onChangeText={setMedicalNotes}
+              placeholder="Previous surgeries, important health notes, doctor remarks..."
               multiline
-              numberOfLines={2}
+              numberOfLines={3}
               containerStyle={styles.input}
             />
-            <MediCareInput
-              label="Chronic Conditions"
-              value={chronicConditions}
-              onChangeText={setChronicConditions}
-              placeholder="Diabetes, Hypertension (comma separated)"
-              multiline
-              numberOfLines={2}
-              containerStyle={styles.input}
-            />
+            <MediCareText tag="body2" color={theme.text[80]} style={styles.fieldHint}>
+              These notes appear in your Health Record PDF
+            </MediCareText>
           </View>
 
           {/* Contact Info */}
@@ -482,46 +437,24 @@ const Profile = () => {
             <MediCareText tag="h4" weight={FontWeight.SemiBold} color={theme.text[110]} style={styles.sectionTitle}>
               Contact Information
             </MediCareText>
-            <MediCareInput
-              label="Emergency Contact"
-              value={emergencyContact}
-              onChangeText={setEmergencyContact}
-              placeholder="+880 1XXX XXXXXX"
-              keyboardType="phone-pad"
-              containerStyle={styles.input}
-            />
-            <MediCareInput
-              label="Address"
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Your address"
-              multiline
-              numberOfLines={2}
-              containerStyle={styles.input}
-            />
+            <MediCareInput label="Emergency Contact" value={emergencyContact} onChangeText={setEmergencyContact} placeholder="+880 1XXX XXXXXX" keyboardType="phone-pad" containerStyle={styles.input} />
           </View>
 
-          {/* Account Settings — only for email/password users */}
+          {/* Account Settings */}
           {isEmailUser && (
             <View style={styles.section}>
               <MediCareText tag="h4" weight={FontWeight.SemiBold} color={theme.text[110]} style={styles.sectionTitle}>
                 Account Settings
               </MediCareText>
-
               <TouchableOpacity style={styles.settingRow} onPress={() => setShowPasswordModal(true)}>
                 <MediCareText tag="body" color={theme.text[110]}>🔒 Change Password</MediCareText>
                 <MediCareText tag="body" color={theme.text[80]}>›</MediCareText>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.settingRow} onPress={() => setShowEmailModal(true)}>
                 <MediCareText tag="body" color={theme.text[110]}>📧 Change Email Address</MediCareText>
                 <MediCareText tag="body" color={theme.text[80]}>›</MediCareText>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.settingRow} onPress={() => {
-                setForgotEmail(user?.email || firebaseUser?.email || '');
-                setShowForgotModal(true);
-              }}>
+              <TouchableOpacity style={styles.settingRow} onPress={() => { setForgotEmail(user?.email || firebaseUser?.email || ''); setShowForgotModal(true); }}>
                 <MediCareText tag="body" color={theme.text[110]}>🔑 Reset Password via Email</MediCareText>
                 <MediCareText tag="body" color={theme.text[80]}>›</MediCareText>
               </TouchableOpacity>
@@ -534,15 +467,14 @@ const Profile = () => {
               🤖 How this helps AI analysis
             </MediCareText>
             <MediCareText tag="body" color={theme.text[80]} style={{ marginTop: 6, lineHeight: 20 }}>
-              Your blood group, allergies and chronic conditions help the AI give more accurate test validity analysis, side effect warnings, and prescription audits specifically for you.
+              Your blood group, allergies, and chronic conditions help the AI give more accurate test validity analysis, side effect warnings, and prescription audits specifically for you.
             </MediCareText>
           </View>
-          <TouchableOpacity
-            style={styles.deleteAccountBtn}
-            onPress={handleDeleteAccount}
-            >
+
+          {/* Delete Account */}
+          <TouchableOpacity style={styles.deleteAccountBtn} onPress={handleDeleteAccount}>
             <MediCareText tag="body" weight={FontWeight.SemiBold} color="#EF4444">
-                🗑 Delete Account
+              🗑 Delete Account
             </MediCareText>
           </TouchableOpacity>
         </View>
@@ -555,40 +487,15 @@ const Profile = () => {
             <MediCareText tag="h3" weight={FontWeight.Bold} color={theme.text[110]} style={{ marginBottom: 20 }}>
               Change Password
             </MediCareText>
-            <MediCareInput
-              label="Current Password"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              containerStyle={styles.input}
-            />
-            <MediCareInput
-              label="New Password"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              containerStyle={{ marginBottom: 4 }}
-            />
+            <MediCareInput label="Current Password" value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry containerStyle={styles.input} />
+            <MediCareInput label="New Password" value={newPassword} onChangeText={setNewPassword} secureTextEntry containerStyle={{ marginBottom: 4 }} />
             <PasswordStrengthIndicator password={newPassword} />
-            <MediCareInput
-              label="Confirm New Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              containerStyle={[styles.input, { marginTop: 12 }]}
-            />
+            <MediCareInput label="Confirm New Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry containerStyle={[styles.input, { marginTop: 12 }]} />
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]}
-                onPress={() => { setShowPasswordModal(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]} onPress={() => { setShowPasswordModal(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }}>
                 <MediCareText tag="body" color={theme.text[90]}>Cancel</MediCareText>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]}
-                onPress={handlePasswordChange}
-                disabled={passwordLoading}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]} onPress={handlePasswordChange} disabled={passwordLoading}>
                 <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.white}>
                   {passwordLoading ? 'Saving...' : 'Change'}
                 </MediCareText>
@@ -608,33 +515,13 @@ const Profile = () => {
             <MediCareText tag="body2" color={theme.text[80]} style={{ marginBottom: 16 }}>
               A verification link will be sent to your new email. Current email stays active until you verify the new one.
             </MediCareText>
-            <MediCareInput
-              label="New Email Address"
-              value={newEmail}
-              onChangeText={setNewEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              containerStyle={styles.input}
-            />
-            <MediCareInput
-              label="Current Password (to confirm)"
-              value={emailPassword}
-              onChangeText={setEmailPassword}
-              secureTextEntry
-              containerStyle={styles.input}
-            />
+            <MediCareInput label="New Email Address" value={newEmail} onChangeText={setNewEmail} keyboardType="email-address" autoCapitalize="none" containerStyle={styles.input} />
+            <MediCareInput label="Current Password (to confirm)" value={emailPassword} onChangeText={setEmailPassword} secureTextEntry containerStyle={styles.input} />
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]}
-                onPress={() => { setShowEmailModal(false); setNewEmail(''); setEmailPassword(''); }}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]} onPress={() => { setShowEmailModal(false); setNewEmail(''); setEmailPassword(''); }}>
                 <MediCareText tag="body" color={theme.text[90]}>Cancel</MediCareText>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]}
-                onPress={handleEmailChange}
-                disabled={emailLoading}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]} onPress={handleEmailChange} disabled={emailLoading}>
                 <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.white}>
                   {emailLoading ? 'Sending...' : 'Send Link'}
                 </MediCareText>
@@ -654,26 +541,12 @@ const Profile = () => {
             <MediCareText tag="body2" color={theme.text[80]} style={{ marginBottom: 16 }}>
               We'll send a password reset link to your email.
             </MediCareText>
-            <MediCareInput
-              label="Email Address"
-              value={forgotEmail}
-              onChangeText={setForgotEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              containerStyle={styles.input}
-            />
+            <MediCareInput label="Email Address" value={forgotEmail} onChangeText={setForgotEmail} keyboardType="email-address" autoCapitalize="none" containerStyle={styles.input} />
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]}
-                onPress={() => { setShowForgotModal(false); setForgotEmail(''); }}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.border[80], borderWidth: 1 }]} onPress={() => { setShowForgotModal(false); setForgotEmail(''); }}>
                 <MediCareText tag="body" color={theme.text[90]}>Cancel</MediCareText>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]}
-                onPress={handleForgotPassword}
-                disabled={forgotLoading}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: theme.colors.primary }]} onPress={handleForgotPassword} disabled={forgotLoading}>
                 <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.white}>
                   {forgotLoading ? 'Sending...' : 'Send Link'}
                 </MediCareText>
@@ -752,6 +625,7 @@ const useStyles = makeStyles(theme => ({
   sectionTitle: { marginBottom: 16 },
   input: { marginBottom: 12 },
   label: { marginBottom: 8 },
+  fieldHint: { marginTop: -8, marginBottom: 8, marginLeft: 2 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   chip: {
     paddingHorizontal: 16,
@@ -775,9 +649,18 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: '#eff6ff',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 40,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#bfdbfe',
+  },
+  deleteAccountBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginBottom: 40,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
   },
   modalOverlay: {
     flex: 1,
@@ -797,15 +680,6 @@ const useStyles = makeStyles(theme => ({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-  },
-  deleteAccountBtn: {
-  alignItems: 'center',
-  paddingVertical: 16,
-  marginBottom: 40,
-  borderWidth: 1,
-  borderColor: '#EF4444',
-  borderRadius: 12,
-  backgroundColor: '#FEF2F2',
   },
 }));
 

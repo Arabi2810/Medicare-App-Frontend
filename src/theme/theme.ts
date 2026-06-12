@@ -58,8 +58,44 @@ export const createLightTheme = () => ({
     500: '#3B82F6',
   },
 });
-
-export type CustomTheme = ReturnType<typeof createLightTheme>;
+export const createDarkTheme = () => ({
+  ...DefaultTheme,
+  dark: true,
+  primary: '#6366f1',
+  secondary: '#0f172a',
+  success: '#22c55e',
+  info: '#38bdf8',
+  warning: '#fb923c',
+  error: { 90: '#f87171', 100: '#ef4444' },
+  background: {
+    50: '#1e1e2e',
+    60: '#1a2332',
+    70: '#0f172a',
+    80: '#1e293b',
+    90: '#334155',
+    100: '#64748b',
+    110: '#1e1e2e',
+    120: '#14532d1a',
+    130: '#818cf8',
+  },
+  border: { 80: '#334155', 90: '#475569', 100: '#64748b' },
+  shadow: { 90: '#00000040', 100: '#00000060' },
+  text: {
+    70: '#94a3b8',
+    80: '#94a3b8',
+    90: '#cbd5e1',
+    100: '#e2e8f0',
+    110: '#f1f5f9',
+  },
+  black: '#f1f5f9',
+  white: '#1e293b',
+  whiteTransparent: 'rgba(30, 41, 59, 0.8)',
+  indigo: { 100: '#312e81', 600: '#818cf8' },
+  green: { 100: '#14532d', 500: '#22c55e', 800: '#bbf7d0' },
+  yellow: { 100: '#422006', 800: '#fef08a' },
+  blue: { 500: '#60a5fa' },
+});
+export type CustomTheme = ReturnType<typeof createLightTheme> | ReturnType<typeof createDarkTheme>;
 
 declare module '@react-navigation/native' {
   export function useTheme(): CustomTheme;

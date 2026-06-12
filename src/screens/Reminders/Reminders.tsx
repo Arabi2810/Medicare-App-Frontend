@@ -1,3 +1,4 @@
+// src/screens/Reminders/Reminders.tsx
 import {
   View,
   ActivityIndicator,
@@ -5,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@react-navigation/native';
 import MediCareText from '../../components/Text/MediCareText';
@@ -14,6 +15,8 @@ import { useGetRemindersQuery } from '../../redux/pescription/pescription';
 import CloseIcon from '../../assets/icons/close.svg';
 import NotificationIcon from '../../assets/icons/notification.svg';
 import ReminderCard from './ReminderCard';
+import notifee, { TriggerType } from '@notifee/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Reminders = () => {
   const styles = useStyle();
@@ -21,14 +24,55 @@ const Reminders = () => {
   const navigation = useNavigation();
   const { data, isLoading, error } = useGetRemindersQuery({});
 
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  };
-
   const reminders = Array.isArray(data) ? data : data?.data || [];
   const scheduledCount = reminders.length;
+
+  useEffect(() => {
+    if (!reminders || reminders.length === 0) return;
+    AsyncStorage.getItem('medicationRemindersEnabled').then(async val => {
+      if (val === 'false') return;
+      for (const reminder of reminders) {
+        if ((reminder as any).status === 'paused') continue;
+        const timings = reminder.timings;
+        const timeStr = timings?.morning || timings?.noon || timings?.night;
+        if (!timeStr) continue;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        if (isNaN(hours) || isNaN(minutes)) continue;
+        const now = new Date();
+        const trigger = new Date(now);
+        trigger.setHours(hours, minutes, 0, 0);
+        if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
+        try {
+          await notifee.createTriggerNotification(
+            {
+              id: `reminder-${(reminder as any)._id}`,
+              title: '🕑 Medicine Time',
+              body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
+              android: {
+                channelId: 'alarm_channel',
+                sound: 'alarm_sound',
+                importance: 4,
+                pressAction: { id: 'default' },
+                loopSound: true,
+                vibrationPattern: [500, 500, 500],
+              },
+            },
+            {
+              type: TriggerType.TIMESTAMP,
+              timestamp: trigger.getTime(),
+              alarmManager: { allowWhileIdle: true },
+            },
+          );
+        } catch (e) {
+          console.warn('Failed to schedule reminder:', (reminder as any)._id, e);
+        }
+      }
+    });
+  }, [reminders]);
+
+  const goBack = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -59,8 +103,6 @@ const Reminders = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
-
-      {/* Header Section - Static */}
       <View style={styles.headerContainer}>
         <View style={styles.topBar}>
           <TouchableOpacity onPress={goBack} style={styles.closeBtn}>
@@ -71,30 +113,21 @@ const Reminders = () => {
           </MediCareText>
           <View style={{ width: 24 }} />
         </View>
-
-        {/* Summary Card */}
         <View style={styles.summaryCard}>
           <View>
             <MediCareText tag="body" color={theme.whiteTransparent}>
               Today
             </MediCareText>
-            <MediCareText
-              tag="h2"
-              weight="Bold"
-              color={theme.white}
-              style={{ marginTop: 4 }}
-            >
+            <MediCareText tag="h2" weight="Bold" color={theme.white} style={{ marginTop: 4 }}>
               {scheduledCount} doses scheduled
             </MediCareText>
           </View>
           <NotificationIcon width={28} height={28} color={theme.white} />
         </View>
       </View>
-
-      {/* Reminders List */}
       <FlatList
         data={reminders}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item, index) => ((item as any)?._id ? String((item as any)._id) : index.toString())}
         renderItem={({ item }) => <ReminderCard item={item} />}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={renderEmptyState}
@@ -105,15 +138,8 @@ const Reminders = () => {
 };
 
 const useStyle = makeStyles(theme => ({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background[70],
-    paddingBottom: 60,
-  },
-  center: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: theme.background[70], paddingBottom: 60 },
+  center: { justifyContent: 'center', alignItems: 'center' },
   headerContainer: {
     backgroundColor: theme.primary,
     paddingTop: 60,
@@ -129,9 +155,7 @@ const useStyle = makeStyles(theme => ({
     alignItems: 'center',
     marginBottom: 24,
   },
-  closeBtn: {
-    padding: 4,
-  },
+  closeBtn: { padding: 4 },
   summaryCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 16,
@@ -140,15 +164,8 @@ const useStyle = makeStyles(theme => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  listContent: {
-    padding: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  emptyState: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
+  listContent: { padding: 20, paddingTop: 20, paddingBottom: 40 },
+  emptyState: { alignItems: 'center', marginTop: 40 },
 }));
 
 export default Reminders;

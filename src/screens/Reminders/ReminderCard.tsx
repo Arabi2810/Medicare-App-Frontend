@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Modal, Alert } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  Modal,
+  Alert,
+  Switch,
+  ActionSheetIOS,
+  Platform,
+} from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import MediCareText from '../../components/Text/MediCareText';
 import { makeStyles } from '../../hooks/makeStyle';
@@ -19,6 +27,9 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
   const theme = useTheme();
   const styles = useStyle();
   const [showEdit, setShowEdit] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const initialEnabled = (item as any)?.status !== 'paused';
+  const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [updateReminder, { isLoading }] = useUpdateReminderMutation();
 
   const [timings, setTimings] = useState({
@@ -31,36 +42,76 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
 
   const displayTime = timings.morning || timings.noon || timings.night || 'N/A';
 
+  const handleToggle = async (value: boolean) => {
+    setIsEnabled(value);
+    try {
+      await updateReminder({
+        reminderId: item._id,
+        data: { status: value ? 'active' : 'paused' },
+      }).unwrap();
+    } catch (error) {
+      setIsEnabled(!value);
+      Alert.alert('Error', 'Failed to update reminder status');
+      return;
+    }
+    try {
+      if (!value) {
+        await notifee.cancelNotification(`reminder-${item._id}`);
+      } else {
+        await scheduleAlarmNotification(item, timings);
+      }
+    } catch (notifErr) {
+      console.warn('Notification scheduling failed:', notifErr);
+    }
+  };
+
   const handleSave = async () => {
     try {
       await updateReminder({
         reminderId: item._id,
         data: { timings, dosage },
       }).unwrap();
-
-      // Cancel old notification
-      await notifee.cancelNotification(`reminder-${item._id}`);
-
-      // Schedule new alarm
-      await scheduleAlarmNotification(item, timings);
-
-      Alert.alert('Success', 'Reminder updated with alarm sound');
-      setShowEdit(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to update reminder');
+      return;
+    }
+    try {
+      await notifee.cancelNotification(`reminder-${item._id}`);
+      await scheduleAlarmNotification(item, timings);
+      Alert.alert('Success', 'Reminder updated');
+    } catch (notifErr) {
+      Alert.alert('Saved', 'Reminder time saved, but alarm could not be scheduled.');
+    }
+    setShowEdit(false);
+  };
+
+  const showThreeDotMenu = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [isEnabled ? 'Turn Off' : 'Turn On', 'Edit Time', 'Cancel'],
+          cancelButtonIndex: 2,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 0) handleToggle(!isEnabled);
+          else if (buttonIndex === 1) setShowEdit(true);
+        }
+      );
+    } else {
+      setShowMenu(true);
     }
   };
 
   return (
     <>
-      <View style={styles.reminderCard}>
+      <View style={[styles.reminderCard, !isEnabled && styles.reminderCardPaused]}>
         <View style={styles.reminderHeader}>
           <View style={styles.reminderTimeContainer}>
             <View style={styles.clockIconBg}>
               <ClockIcon width={20} height={20} color={theme.primary} />
             </View>
             <View style={styles.reminderDetails}>
-              <MediCareText tag="h3" weight="Bold" color={theme.black}>
+              <MediCareText tag="h3" weight="Bold" color={isEnabled ? theme.black : theme.text[100]}>
                 {displayTime}
               </MediCareText>
               <MediCareText tag="body" color={theme.text[100]}>
@@ -68,31 +119,67 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
               </MediCareText>
             </View>
           </View>
-          <TouchableOpacity onPress={() => setShowEdit(true)} style={styles.editBtn}>
-            <MediCareText tag="body" color={theme.primary}>✏️</MediCareText>
-          </TouchableOpacity>
+
+          <View style={styles.rightActions}>
+            <Switch
+              value={isEnabled}
+              onValueChange={handleToggle}
+              trackColor={{ false: theme.border[80], true: theme.primary + '55' }}
+              thumbColor={isEnabled ? theme.primary : theme.text[100]}
+              style={styles.toggle}
+            />
+            <TouchableOpacity onPress={showThreeDotMenu} style={styles.menuBtn}>
+              <MediCareText tag="h3" color={theme.text[100]}>⋮</MediCareText>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.reminderFooter}>
-          <NotificationIcon width={14} height={14} color={theme.text[100]} />
-          <MediCareText tag="body2" color={theme.text[100]} style={styles.footerText}>
-            Sound + Notification enabled
+          <NotificationIcon
+            width={14}
+            height={14}
+            color={isEnabled ? theme.text[100] : theme.border[80]}
+          />
+          <MediCareText
+            tag="body2"
+            color={isEnabled ? theme.text[100] : theme.border[80]}
+            style={styles.footerText}
+          >
+            {isEnabled ? 'Sound + Notification enabled' : 'Reminder paused'}
           </MediCareText>
         </View>
       </View>
 
-      {/* Edit Modal */}
+      {/* Android three dot menu */}
+      <Modal visible={showMenu} transparent animationType="fade" onRequestClose={() => setShowMenu(false)}>
+        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowMenu(false)} activeOpacity={1}>
+          <View style={styles.menuCard}>
+            <MediCareText tag="body" weight="SemiBold" color={theme.text[100]} style={styles.menuMedicineName}>
+              {item.medicineName}
+            </MediCareText>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); handleToggle(!isEnabled); }}>
+              <MediCareText tag="body" color={theme.black}>
+                {isEnabled ? '🔕 Turn Off' : '🔔 Turn On'}
+              </MediCareText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); setShowEdit(true); }}>
+              <MediCareText tag="body" color={theme.black}>✏️ Edit Time</MediCareText>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Edit Time Modal */}
       <Modal visible={showEdit} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <MediCareText tag="h3" weight="Bold" color={theme.text[110]} style={styles.modalTitle}>
               Edit Reminder
             </MediCareText>
-
             <MediCareText tag="body" weight="SemiBold" color={theme.text[110]} style={styles.label}>
               {item.medicineName}
             </MediCareText>
-
             <MediCareInput
               label="Dosage"
               value={dosage}
@@ -100,24 +187,20 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
               placeholder="e.g. 1 tablet"
               containerStyle={styles.input}
             />
-
             <MediCareText tag="body" weight="SemiBold" color={theme.text[110]} style={styles.label}>
               Time (24-hour format)
             </MediCareText>
             <MediCareInput
               value={timings.morning || timings.noon || timings.night || ''}
               onChangeText={(text) => {
-                setTimings({ morning: text, noon: '', night: '' });
+                const slot = item.timings?.morning ? 'morning' : item.timings?.noon ? 'noon' : 'night';
+                setTimings(prev => ({ ...prev, [slot]: text }));
               }}
               placeholder="09:15"
               containerStyle={styles.input}
             />
-
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setShowEdit(false)}
-              >
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowEdit(false)}>
                 <MediCareText tag="body" color={theme.text[90]}>Cancel</MediCareText>
               </TouchableOpacity>
               <MediCareButton
@@ -138,39 +221,36 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
 const scheduleAlarmNotification = async (reminder: any, timings: any) => {
   const timeStr = timings.morning || timings.noon || timings.night;
   if (!timeStr) return;
-
   const [hours, minutes] = timeStr.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return;
-
   const triggerTime = getNextTriggerTime(hours, minutes);
-
   await notifee.createTriggerNotification(
     {
       id: `reminder-${reminder._id}`,
-      title: `🕒 Medicine Time`,
+      title: `🕑 Medicine Time`,
       body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
       android: {
         channelId: 'alarm_channel',
         sound: 'alarm_sound',
         importance: 4,
         pressAction: { id: 'default' },
-        fullScreenIntent: true,        // Important for alarm behavior
         loopSound: true,
         vibrationPattern: [500, 500, 500],
+        asForegroundService: false,
       },
     },
     {
       type: TriggerType.TIMESTAMP,
       timestamp: triggerTime,
+      alarmManager: { allowWhileIdle: true },
     }
   );
 };
 
 const getNextTriggerTime = (hours: number, minutes: number): number => {
   const now = new Date();
-  let trigger = new Date(now);
+  const trigger = new Date(now);
   trigger.setHours(hours, minutes, 0, 0);
-
   if (trigger.getTime() <= now.getTime()) {
     trigger.setDate(trigger.getDate() + 1);
   }
@@ -189,13 +269,17 @@ const useStyle = makeStyles(theme => ({
     shadowRadius: 10,
     elevation: 2,
   },
+  reminderCardPaused: {
+    opacity: 0.6,
+    backgroundColor: theme.background[70],
+  },
   reminderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  reminderTimeContainer: { flexDirection: 'row', alignItems: 'center' },
+  reminderTimeContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   clockIconBg: {
     width: 40,
     height: 40,
@@ -206,9 +290,27 @@ const useStyle = makeStyles(theme => ({
     marginRight: 12,
   },
   reminderDetails: { justifyContent: 'center' },
-  editBtn: { padding: 6 },
+  rightActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  toggle: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
+  menuBtn: { padding: 6, marginLeft: 2 },
   reminderFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   footerText: { marginLeft: 6 },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuCard: {
+    backgroundColor: theme.white,
+    borderRadius: 16,
+    paddingVertical: 8,
+    width: 220,
+    elevation: 8,
+  },
+  menuMedicineName: { paddingHorizontal: 16, paddingVertical: 10 },
+  menuDivider: { height: 1, backgroundColor: theme.border[80], marginBottom: 4 },
+  menuItem: { paddingHorizontal: 16, paddingVertical: 14 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

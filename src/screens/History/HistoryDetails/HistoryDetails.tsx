@@ -5,6 +5,7 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import React, { useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -13,16 +14,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MediCareText, { FontWeight } from '../../../components/Text/MediCareText';
 import { makeStyles } from '../../../hooks/makeStyle';
 import { RootStackParamList } from '../../../navigation/Screens';
-import { useGetPrescriptionDetailsQuery } from '../../../redux/pescription/pescription';
+import {
+  useGetPrescriptionDetailsQuery,
+  useDeletePrescriptionMutation,
+} from '../../../redux/pescription/pescription';
 import Header from './components/Header';
 import PatientInfo from './components/PatientInfo';
 import Medicines from './components/Medicines';
 import MediCareButton from '../../../components/Button/MediCareButton';
-
 import DiagnosisSymptoms from './components/DiagnosisSymptoms';
 import { Prescription } from '@src/utils/types';
-import { Alert } from 'react-native';
-import { useDeletePrescriptionMutation } from '../../../redux/pescription/pescription';
+import Tests from './components/Tests';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HistoryDetails'>;
 
@@ -33,17 +35,16 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
   const styles = useStyle();
 
   const { data, isLoading, error } = useGetPrescriptionDetailsQuery(id);
-
   const prescription: Prescription = data?.data?.prescription;
   const [showImage, setShowImage] = useState(false);
+
+  const [deletePrescription, { isLoading: isDeleting }] = useDeletePrescriptionMutation();
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    // Format: YYYY-MM-DD
     return date.toISOString().split('T')[0];
   };
-  const [deletePrescription, { isLoading: isDeleting }] = useDeletePrescriptionMutation();
 
   const handleDelete = () => {
     Alert.alert(
@@ -65,6 +66,11 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
         },
       ]
     );
+  };
+
+  const handleEdit = () => {
+    // Navigate to edit screen — adjust route name to match your navigation
+    navigation.navigate('FormScreen', { data: prescription });
   };
 
   if (isLoading) {
@@ -90,6 +96,8 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
       </View>
     );
   }
+
+  const isCompleted = prescription.isComplete;
 
   return (
     <View style={styles.container}>
@@ -139,21 +147,66 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
           />
 
           <Medicines medicines={prescription.medicines} />
+          {prescription.tests && prescription.tests.length > 0 && (
+            <Tests tests={prescription.tests.map((t: any) => ({ name: t.name }))} />
+          )}
+          {/* Bottom action area */}
+          <View style={styles.bottomActions}>
 
-          {/* <Tests tests={prescription.tests} /> */}
+            {/* Edit + Delete icon buttons — only shown when NOT completed */}
+            {!isCompleted && (
+              <View style={styles.iconButtonRow}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={handleEdit}
+                >
+                  <MediCareText tag="body" style={styles.iconBtnIcon}>✏️</MediCareText>
+                  <MediCareText tag="body2" color={theme.primary} weight="SemiBold">
+                    Edit
+                  </MediCareText>
+                </TouchableOpacity>
 
-          {!prescription.isComplete && <View style={{ marginTop: 20 }}>
-            <MediCareButton
-              title="Complete Prescription"
-              onPress={() => navigation.navigate('CompleteHistory', { prescriptionId: id, userId: prescription.userId })}
-            />
-          </View>}
-          <View style={{ marginTop: 12 }}>
-            <MediCareButton
-              title={isDeleting ? 'Deleting...' : 'Delete Prescription'}
-              onPress={handleDelete}
-              style={{ backgroundColor: '#EF4444' }}
-            />
+                <TouchableOpacity
+                  style={[styles.iconBtn, styles.iconBtnDanger]}
+                  onPress={handleDelete}
+                  disabled={isDeleting}
+                >
+                  <MediCareText tag="body" style={styles.iconBtnIcon}>🗑️</MediCareText>
+                  <MediCareText tag="body2" color="#EF4444" weight="SemiBold">
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </MediCareText>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Complete Prescription bar — only when not completed */}
+            {!isCompleted && (
+              <MediCareButton
+                title="Complete Prescription"
+                onPress={() =>
+                  navigation.navigate('CompleteHistory', {
+                    prescriptionId: id,
+                    userId: prescription.userId,
+                  })
+                }
+                style={styles.completeBtn}
+              />
+            )}
+
+            {/* If completed — only show delete */}
+            {isCompleted && (
+              <TouchableOpacity
+                style={styles.deleteOnlyBtn}
+                onPress={handleDelete}
+                disabled={isDeleting}
+              >
+                <MediCareText tag="body" style={styles.iconBtnIcon}>🗑️</MediCareText>
+                <MediCareText tag="body" color="#EF4444" weight="SemiBold">
+                  {isDeleting ? 'Deleting...' : 'Delete Prescription'}
+                </MediCareText>
+              </TouchableOpacity>
+            )}
+
           </View>
         </View>
       </ScrollView>
@@ -164,7 +217,7 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
 const useStyle = makeStyles(theme => ({
   container: {
     flex: 1,
-    backgroundColor: theme.background[70], // Light grey background
+    backgroundColor: theme.background[70],
   },
   center: {
     justifyContent: 'center',
@@ -194,6 +247,48 @@ const useStyle = makeStyles(theme => ({
     borderRadius: 12,
     marginBottom: 12,
     backgroundColor: '#f3f4f6',
+  },
+
+  // Bottom actions
+  bottomActions: {
+    marginTop: 20,
+    gap: 12,
+  },
+  iconButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  iconBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: theme.primary,
+    backgroundColor: theme.white,
+  },
+  iconBtnDanger: {
+    borderColor: '#EF4444',
+  },
+  iconBtnIcon: {
+    fontSize: 16,
+  },
+  completeBtn: {
+    borderRadius: 12,
+  },
+  deleteOnlyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+    backgroundColor: theme.white,
   },
 }));
 

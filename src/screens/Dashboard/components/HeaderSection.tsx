@@ -1,3 +1,4 @@
+// src/screens/Dashboard/components/HeaderSection.tsx
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { makeStyles } from '@src/hooks/makeStyle';
@@ -13,17 +14,23 @@ interface Props {
   progressTextLeft: string;
   progressTextRight: string;
   progress: number; // 0..1
+  missed?: number;  // ← NEW: how many missed today
 }
 
 const HeaderSection: React.FC<Props> = ({
   progressTextLeft,
   progressTextRight,
   progress,
+  missed = 0,
 }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DrawerNavigationProp<DrawerParamList>>();
   const user = useAppSelector(state => state.auth).user;
   const styles = useStyle({ insets });
+
+  // Progress bar: taken (green) + missed (red) + pending (grey)
+  const takenWidth: `${number}%` = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -33,7 +40,7 @@ const HeaderSection: React.FC<Props> = ({
             weight={FontWeight.Bold}
             color={styles.headerText.color as string}
           >
-            {`Hello, ${user?.fullName}!`}
+            {`Hello, ${user?.fullName ?? 'there'}!`}
           </MediCareText>
           <MediCareText
             tag="body2"
@@ -64,27 +71,40 @@ const HeaderSection: React.FC<Props> = ({
           <MediCareText
             tag="body2"
             weight={FontWeight.Medium}
-            color={styles.progressText.color as string}
+            color={missed > 0 ? '#EF4444' : styles.progressText.color as string}
           >
             {progressTextRight}
           </MediCareText>
         </View>
+
+        {/* Progress bar track */}
         <View style={styles.progressBarTrack}>
+          {/* Taken — green fill */}
           <View
             style={[
               styles.progressBarFill,
-              { width: `${Math.min(Math.max(progress, 0), 1) * 100}%` },
+              { width: takenWidth },
             ]}
           />
+          {/* Missed indicator — red dot at end of fill if any missed */}
+          {missed > 0 && (
+            <View style={styles.missedDot} />
+          )}
         </View>
-      </View>
 
-      {/* Logo removed as requested */}
+        {/* Missed warning text */}
+        {missed > 0 && (
+          <MediCareText tag="body2" color="#EF4444" style={styles.missedText}>
+            {`⚠️ ${missed} medicine${missed > 1 ? 's' : ''} missed today`}
+          </MediCareText>
+        )}
+      </View>
     </View>
   );
 };
 
 export default HeaderSection;
+
 interface StyleProp {
   insets: EdgeInsets;
 }
@@ -130,15 +150,25 @@ const useStyle = makeStyles((theme, props: StyleProp) => ({
     color: theme.text[100],
   },
   progressBarTrack: {
-    height: 6,
+    height: 8,
     backgroundColor: theme.background[90],
     borderRadius: 6,
     overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   progressBarFill: {
-    height: 6,
+    height: 8,
     backgroundColor: theme.primary,
     borderRadius: 6,
   },
-  // Logo container removed
+  missedDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
+  missedText: {
+    marginTop: 6,
+  },
 }));
