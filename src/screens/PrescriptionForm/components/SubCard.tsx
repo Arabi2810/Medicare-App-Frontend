@@ -39,7 +39,13 @@ const SubCard: React.FC<SubCardProps> = ({
     return (
         <>
             {items.map((item, index) => {
-                const hiddenFields = ['testDefinition', 'patientRelevance', 'validityLevel'];
+                const hiddenFields = [
+                    '_id', 'id', 'userId', 'prescriptionId',
+                    'status', 'processingStatus',
+                    'completedDate', 'reportUrl', 'resultSummary', 'notes',
+                    'testDefinition', 'patientRelevance', 'validityLevel',
+                    'createdAt', 'updatedAt', 'uploadedAt', 'parsedAt',
+                ];
                 const filteredItem = Object.entries(item).reduce((acc, [key, value]) => {
                     if (!hiddenFields.includes(key)) {
                         acc[key] = value ?? '';

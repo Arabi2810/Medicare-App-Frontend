@@ -6,6 +6,7 @@ import {
   Image,
   Alert,
   Modal,
+  ActivityIndicator
 } from 'react-native';
 import React, { useState } from 'react';
 import { makeStyles } from '@src/hooks/makeStyle';
@@ -154,14 +155,21 @@ const SignIn = () => {
             }}
             disabled={isLoading || googleLoading}
           >
-            <Image
-              source={require('@src/assets/images/google.png')}
-              style={styles.socialIcon}
-            />
-            <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[110]}>
-              Continue with Google
-            </MediCareText>
+            {googleLoading ? (
+              <ActivityIndicator size="small" color={theme.primary} />
+            ) : (
+              <>
+                <Image
+                  source={require('@src/assets/images/google.png')}
+                  style={styles.socialIcon}
+                />
+                <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[110]}>
+                  Continue with Google
+                </MediCareText>
+              </>
+            )}
           </TouchableOpacity>
+
 
           <TouchableOpacity
             style={[styles.socialButton, { marginTop: 12 }]}

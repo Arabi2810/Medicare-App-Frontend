@@ -1,27 +1,26 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useTheme } from '@react-navigation/native';
-import MediCareText from '../../components/Text/MediCareText';
-import { makeStyles } from '../../hooks/makeStyle';
+import { makeStyles } from '@src/hooks/makeStyle';
+import MediCareText from '@src/components/Text/MediCareText';
 
-const EmptyPendingTests: React.FC = () => {
-    const theme = useTheme();
-    const styles = useStyles();
-
-    return (
-        <View style={styles.emptyState}>
-            <MediCareText tag="body" color={theme.text[100]}>
-                No pending tests available
-            </MediCareText>
-        </View>
-    );
+const EmptyPendingTests = () => {
+  const styles = useStyles();
+  return (
+    <View style={styles.container}>
+      <MediCareText tag="h2" style={styles.emoji}>🧪</MediCareText>
+      <MediCareText tag="h3" weight="Bold" style={styles.title}>No Pending Tests</MediCareText>
+      <MediCareText tag="body" style={styles.subtitle}>
+        When your prescription includes lab tests, they will appear here.
+      </MediCareText>
+    </View>
+  );
 };
 
 const useStyles = makeStyles(theme => ({
-    emptyState: {
-        alignItems: 'center',
-        marginTop: 40,
-    },
+  container: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 },
+  emoji: { fontSize: 48, marginBottom: 16 },
+  title: { color: theme.text[110], marginBottom: 8, textAlign: 'center' },
+  subtitle: { color: theme.text[80], textAlign: 'center', lineHeight: 22 },
 }));
 
 export default EmptyPendingTests;

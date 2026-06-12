@@ -25,7 +25,7 @@ import MediCareButton from '../../../components/Button/MediCareButton';
 import DiagnosisSymptoms from './components/DiagnosisSymptoms';
 import { Prescription } from '@src/utils/types';
 import Tests from './components/Tests';
-
+import { useIsFocused } from '@react-navigation/native';
 type Props = NativeStackScreenProps<RootStackParamList, 'HistoryDetails'>;
 
 const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
@@ -34,7 +34,12 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
   const theme = useTheme();
   const styles = useStyle();
 
-  const { data, isLoading, error } = useGetPrescriptionDetailsQuery(id);
+  const { data, isLoading, error, refetch } = useGetPrescriptionDetailsQuery(id);
+  const isFocused = useIsFocused();
+    React.useEffect(() => {
+      if (isFocused) refetch();
+    }, [isFocused]);
+
   const prescription: Prescription = data?.data?.prescription;
   const [showImage, setShowImage] = useState(false);
 

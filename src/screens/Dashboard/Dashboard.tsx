@@ -1,3 +1,4 @@
+// src/screens/Dashboard/Dashboard.tsx
 import { View, ScrollView, StatusBar, ActivityIndicator } from 'react-native';
 import React from 'react';
 import { makeStyles } from '@src/hooks/makeStyle';
@@ -14,7 +15,10 @@ import {
   RootStackParamList,
 } from '@src/navigation/Screens';
 import HeaderSection from './components/HeaderSection';
-import { useGetActiveMedicationsQuery } from '@src/redux/pescription/pescription';
+import {
+  useGetActiveMedicationsQuery,
+  useGetTodayProgressQuery,
+} from '@src/redux/pescription/pescription';
 import { UploadFileType } from '../UploadPrescription/UploadPrescription';
 
 const Dashboard = () => {
@@ -26,10 +30,24 @@ const Dashboard = () => {
   const { data: activeMedicationsData, isLoading } =
     useGetActiveMedicationsQuery({});
 
-  /* const reminders = [
-    { id: '1', title: 'Napa 500mg', time: '09:00 AM' },
-    { id: '2', title: 'Napa 500mg', time: '02:00 PM' },
-  ]; */
+  // ← NEW: Fetch today's real progress
+  const { data: todayProgressData } = useGetTodayProgressQuery({});
+
+  const todayProgress = todayProgressData?.data;
+
+  // Build progress bar values from real data
+  const progressValue = todayProgress?.progress ?? 0;
+  const taken = todayProgress?.taken ?? 0;
+  const total = todayProgress?.total ?? 0;
+  const missed = todayProgress?.missed ?? 0;
+
+  // Progress bar text
+  const progressTextRight =
+    total > 0
+      ? missed > 0
+        ? `${taken} of ${total} · ${missed} missed`
+        : `${taken} of ${total} doses`
+      : '0 of 0 doses';
 
   if (isLoading) {
     return (
@@ -52,8 +70,8 @@ const Dashboard = () => {
       >
         <HeaderSection
           progressTextLeft="Today's Progress"
-          progressTextRight="0 of 0 doses"
-          progress={0}
+          progressTextRight={progressTextRight}
+          progress={progressValue}
         />
 
         <View style={styles.tileRow}>
@@ -81,8 +99,6 @@ const Dashboard = () => {
               activeCount={activeMedicationsData?.data?.totalMedications}
             />
           )}
-
-          {/* <NextRemindersSection items={reminders} /> */}
         </View>
       </ScrollView>
     </View>

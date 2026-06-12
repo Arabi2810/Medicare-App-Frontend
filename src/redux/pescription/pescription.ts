@@ -1,3 +1,4 @@
+// src/redux/pescription/pescription.ts
 import { apiSlice } from '../features/api/apiSlice';
 
 export const prescriptionApi = apiSlice.injectEndpoints({
@@ -33,6 +34,14 @@ export const prescriptionApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Reminders'],
     }),
+    updatePrescription: builder.mutation({
+      query: ({ id, data }: { id: string; data: any }) => ({
+        url: `api/prescriptions/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Prescriptions', 'Reminders', 'ActiveMedications'],
+    }),
     completeTestReport: builder.mutation({
       query: ({
         prescriptionId,
@@ -46,9 +55,7 @@ export const prescriptionApi = apiSlice.injectEndpoints({
         url: `api/prescriptions/${prescriptionId}/tests/${testId}/complete`,
         method: 'PATCH',
         body: data,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       }),
       invalidatesTags: ['PendingTests'],
     }),
@@ -67,8 +74,10 @@ export const prescriptionApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Prescriptions', 'ActiveMedications', 'Reminders'],
     }),
+    // Clinical summary tabs — cached for 10 minutes so switching tabs doesn't re-fetch
     getClinicalSummary: builder.query({
       query: () => ({ url: '/api/prescriptions/clinical-summary' }),
+      keepUnusedDataFor: 600,
     }),
     getClinicalSummaryPdf: builder.query({
       query: () => ({
@@ -78,12 +87,43 @@ export const prescriptionApi = apiSlice.injectEndpoints({
     }),
     getSideEffects: builder.query({
       query: () => ({ url: '/api/prescriptions/side-effects' }),
+      keepUnusedDataFor: 600,
     }),
     getHealthTimeline: builder.query({
       query: () => ({ url: '/api/prescriptions/health-timeline' }),
+      keepUnusedDataFor: 600,
     }),
     getCaseDocumentation: builder.query({
       query: () => ({ url: '/api/prescriptions/case-documentation' }),
+      keepUnusedDataFor: 600,
+    }),
+
+    // ============================================
+    // DAILY LOG ENDPOINTS
+    // ============================================
+    getTodayProgress: builder.query({
+      query: () => ({ url: '/api/daily-log/today' }),
+      providesTags: ['DailyLog'],
+    }),
+    getMissedMedicines: builder.query({
+      query: () => ({ url: '/api/daily-log/missed' }),
+      providesTags: ['DailyLog'],
+    }),
+    markMedicineTaken: builder.mutation({
+      query: (logId: string) => ({
+        url: '/api/daily-log/mark-taken',
+        method: 'POST',
+        body: { logId },
+      }),
+      invalidatesTags: ['DailyLog'],
+    }),
+    markTakenByReminder: builder.mutation({
+      query: ({ reminderId, slot }: { reminderId: string; slot: string }) => ({
+        url: '/api/daily-log/mark-taken-by-reminder',
+        method: 'POST',
+        body: { reminderId, slot },
+      }),
+      invalidatesTags: ['DailyLog'],
     }),
   }),
 });
@@ -104,4 +144,9 @@ export const {
   useGetCaseDocumentationQuery,
   useDeletePrescriptionMutation,
   useUpdateReminderMutation,
+  useUpdatePrescriptionMutation,
+  useGetTodayProgressQuery,
+  useGetMissedMedicinesQuery,
+  useMarkMedicineTakenMutation,
+  useMarkTakenByReminderMutation,
 } = prescriptionApi;

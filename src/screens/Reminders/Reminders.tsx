@@ -15,7 +15,7 @@ import { useGetRemindersQuery } from '../../redux/pescription/pescription';
 import CloseIcon from '../../assets/icons/close.svg';
 import NotificationIcon from '../../assets/icons/notification.svg';
 import ReminderCard from './ReminderCard';
-import notifee, { TriggerType } from '@notifee/react-native';
+import notifee, { TriggerType, RepeatFrequency } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Reminders = () => {
@@ -32,40 +32,52 @@ const Reminders = () => {
     AsyncStorage.getItem('medicationRemindersEnabled').then(async val => {
       if (val === 'false') return;
       for (const reminder of reminders) {
-        if ((reminder as any).status === 'paused') continue;
+      if ((reminder as any).status === 'paused') continue;
         const timings = reminder.timings;
-        const timeStr = timings?.morning || timings?.noon || timings?.night;
-        if (!timeStr) continue;
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        if (isNaN(hours) || isNaN(minutes)) continue;
-        const now = new Date();
-        const trigger = new Date(now);
-        trigger.setHours(hours, minutes, 0, 0);
-        if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
-        try {
-          await notifee.createTriggerNotification(
-            {
-              id: `reminder-${(reminder as any)._id}`,
-              title: '🕑 Medicine Time',
-              body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
-              android: {
-                channelId: 'alarm_channel',
-                sound: 'alarm_sound',
-                importance: 4,
-                pressAction: { id: 'default' },
-                loopSound: true,
-                vibrationPattern: [500, 500, 500],
+        const schedules = reminder.schedules || {};
+        const slots: Array<['morning' | 'noon' | 'night', string | undefined]> = [
+          ['morning', timings?.morning],
+          ['noon', timings?.noon],
+          ['night', timings?.night],
+        ];
+
+        for (const [slotName, timeStr] of slots) {
+          if (!schedules[slotName] || !timeStr) continue;
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          if (isNaN(hours) || isNaN(minutes)) continue;
+
+          const now = new Date();
+          const trigger = new Date(now);
+          trigger.setHours(hours, minutes, 0, 0);
+          if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
+
+          try {
+            await notifee.createTriggerNotification(
+              {
+                id: `reminder-${(reminder as any)._id}-${slotName}`,
+                title: '🕑 Medicine Time',
+                body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
+                android: {
+                  channelId: 'alarm_channel',
+                  sound: 'alarm_sound',
+                  importance: 4,
+                  pressAction: { id: 'default' },
+                  loopSound: true,
+                  vibrationPattern: [500, 500, 500],
+                },
               },
-            },
-            {
-              type: TriggerType.TIMESTAMP,
-              timestamp: trigger.getTime(),
-              alarmManager: { allowWhileIdle: true },
-            },
-          );
-        } catch (e) {
-          console.warn('Failed to schedule reminder:', (reminder as any)._id, e);
+              {
+                type: TriggerType.TIMESTAMP,
+                timestamp: trigger.getTime(),
+                repeatFrequency: RepeatFrequency.DAILY,
+                alarmManager: { allowWhileIdle: true },
+              },
+            );
+          } catch (e) {
+            console.warn('Failed to schedule reminder:', (reminder as any)._id, slotName, e);
+          }
         }
+
       }
     });
   }, [reminders]);

@@ -17,14 +17,23 @@ import { MedicineItem } from '@src/utils/types';
 import { useUpdateReminderMutation } from '@src/redux/pescription/pescription';
 import MediCareInput from '@src/components/Input/MediCareInput';
 import MediCareButton, { ButtonType } from '@src/components/Button/MediCareButton';
-import notifee, { TriggerType, RepeatFrequency } from '@notifee/react-native';
-import { useToast } from '@src/components/Toast/ToastProvider';
+import notifee, { TriggerType } from '@notifee/react-native';
+
+interface DailyLog {
+  _id: string;
+  reminderId: string;
+  scheduledSlot: 'morning' | 'noon' | 'night';
+  status: 'pending' | 'taken' | 'missed';
+  medicineName: string;
+}
 
 interface Props {
   item: MedicineItem;
+  todayLogs?: DailyLog[];
+  onMarkTaken?: (logId: string) => void;
 }
 
-const ReminderCard: React.FC<Props> = ({ item }) => {
+const ReminderCard: React.FC<Props> = ({ item, todayLogs = [], onMarkTaken }) => {
   const theme = useTheme();
   const styles = useStyle();
   const [showEdit, setShowEdit] = useState(false);
@@ -32,7 +41,6 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
   const initialEnabled = (item as any)?.status !== 'paused';
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
   const [updateReminder, { isLoading }] = useUpdateReminderMutation();
-  const { showToast } = useToast();
 
   const [timings, setTimings] = useState({
     morning: item.timings?.morning || '08:00',
@@ -44,28 +52,45 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
 
   const displayTime = timings.morning || timings.noon || timings.night || 'N/A';
 
-  const handleToggle = async (value: boolean) => {
-    setIsEnabled(value);
-    try {
-      await updateReminder({
-        reminderId: item._id,
-        data: { status: value ? 'active' : 'paused' },
-      }).unwrap();
-    } catch (error) {
-      setIsEnabled(!value);
-      Alert.alert('Error', 'Failed to update reminder status');
-      return;
+  // Find today's log for this reminder
+  const activeSlot = item.timings?.morning
+    ? 'morning'
+    : item.timings?.noon
+    ? 'noon'
+    : 'night';
+
+  const todayLog = todayLogs.find(
+    (log) =>
+      log.reminderId === (item as any)._id &&
+      log.scheduledSlot === activeSlot
+  );
+
+  const isTaken = todayLog?.status === 'taken';
+  const isMissed = todayLog?.status === 'missed';
+
+const handleToggle = async (value: boolean) => {
+  setIsEnabled(value);
+  try {
+    await updateReminder({
+      reminderId: item._id,
+      data: { status: value ? 'active' : 'paused' },
+    }).unwrap();
+  } catch (error) {
+    setIsEnabled(!value);
+    Alert.alert('Error', 'Failed to update reminder status');
+    return;
+  }
+
+  try {
+    if (!value) {
+      await notifee.cancelNotification(`reminder-${item._id}`);
+    } else {
+      await scheduleAlarmNotification(item, timings);
     }
-    try {
-      if (!value) {
-        await notifee.cancelNotification(`reminder-${item._id}`);
-      } else {
-        await scheduleAlarmNotification(item, timings);
-      }
-    } catch (notifErr) {
-      console.warn('Notification scheduling failed:', notifErr);
-    }
-  };
+  } catch (notifErr) {
+    console.warn('Notification scheduling failed:', notifErr);
+  }
+};
 
 const handleSave = async () => {
   try {
@@ -73,63 +98,42 @@ const handleSave = async () => {
       reminderId: item._id,
       data: { timings, dosage },
     }).unwrap();
-
-    // Cancel all existing alarms for this reminder
-    await notifee.cancelNotification(`reminder-${item._id}-morning`);
-    await notifee.cancelNotification(`reminder-${item._id}-noon`);
-    await notifee.cancelNotification(`reminder-${item._id}-night`);
-
-    // Reschedule based on new timings/schedules
-    const slots: Array<['morning' | 'noon' | 'night', string | undefined]> = [
-      ['morning', timings?.morning],
-      ['noon', timings?.noon],
-      ['night', timings?.night],
-    ];
-
-    for (const [slotName, timeStr] of slots) {
-      if (!item.schedules?.[slotName] || !timeStr) continue;
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      if (isNaN(hours) || isNaN(minutes)) continue;
-
-      const now = new Date();
-      const trigger = new Date(now);
-      trigger.setHours(hours, minutes, 0, 0);
-      if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
-
-      await notifee.createTriggerNotification(
-        {
-          id: `reminder-${item._id}-${slotName}`,
-          title: '🕑 Medicine Time',
-          body: `${item.medicineName} - ${dosage || 'Take now'}`,
-          android: {
-            channelId: 'alarm_channel',
-            sound: 'alarm_sound',
-            importance: 4,
-            pressAction: { id: 'default' },
-            loopSound: true,
-            vibrationPattern: [500, 500, 500],
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: trigger.getTime(),
-          repeatFrequency: RepeatFrequency.DAILY,
-          alarmManager: { allowWhileIdle: true },
-        },
-      );
-    }
-
-    showToast('Reminder updated successfully', 'success');
-    setShowEdit(false);
   } catch (error) {
-    showToast('Failed to update reminder', 'error');
+    Alert.alert('Error', 'Failed to update reminder');
+    return;
   }
+
+  try {
+    await notifee.cancelNotification(`reminder-${item._id}`);
+    await scheduleAlarmNotification(item, timings);
+    Alert.alert('Success', 'Reminder updated');
+  } catch (notifErr) {
+    Alert.alert('Saved', 'Reminder time saved, but alarm sound could not be scheduled.');
+  }
+  setShowEdit(false);
 };
+
+  const handleMarkTaken = () => {
+    if (!todayLog) {
+      Alert.alert('Not available', 'No log found for today');
+      return;
+    }
+    if (isTaken) {
+      Alert.alert('Already taken', 'You already marked this medicine as taken');
+      return;
+    }
+    onMarkTaken?.(todayLog._id);
+  };
+
   const showThreeDotMenu = () => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: [isEnabled ? 'Turn Off' : 'Turn On', 'Edit Time', 'Cancel'],
+          options: [
+            isEnabled ? 'Turn Off' : 'Turn On',
+            'Edit Time',
+            'Cancel',
+          ],
           cancelButtonIndex: 2,
         },
         (buttonIndex) => {
@@ -142,10 +146,20 @@ const handleSave = async () => {
     }
   };
 
+  // Status badge color
+  const statusColor = isTaken
+    ? '#16A34A'
+    : isMissed
+    ? '#EF4444'
+    : theme.text[100];
+
+  const statusLabel = isTaken ? '✅ Taken' : isMissed ? '❌ Missed' : '⏳ Pending';
+
   return (
     <>
       <View style={[styles.reminderCard, !isEnabled && styles.reminderCardPaused]}>
         <View style={styles.reminderHeader}>
+          {/* Left: Clock icon + time + medicine */}
           <View style={styles.reminderTimeContainer}>
             <View style={styles.clockIconBg}>
               <ClockIcon width={20} height={20} color={theme.primary} />
@@ -160,6 +174,7 @@ const handleSave = async () => {
             </View>
           </View>
 
+          {/* Right: Toggle + Three dot */}
           <View style={styles.rightActions}>
             <Switch
               value={isEnabled}
@@ -174,36 +189,96 @@ const handleSave = async () => {
           </View>
         </View>
 
+        {/* Footer row: status + mark taken button */}
         <View style={styles.reminderFooter}>
-          <NotificationIcon
-            width={14}
-            height={14}
-            color={isEnabled ? theme.text[100] : theme.border[80]}
-          />
-          <MediCareText
-            tag="body2"
-            color={isEnabled ? theme.text[100] : theme.border[80]}
-            style={styles.footerText}
-          >
-            {isEnabled ? 'Sound + Notification enabled' : 'Reminder paused'}
-          </MediCareText>
+          <View style={styles.footerLeft}>
+            <NotificationIcon
+              width={14}
+              height={14}
+              color={isEnabled ? theme.text[100] : theme.border[80]}
+            />
+            <MediCareText
+              tag="body2"
+              color={isEnabled ? theme.text[100] : theme.border[80]}
+              style={styles.footerText}
+            >
+              {isEnabled ? 'Sound + Notification enabled' : 'Reminder paused'}
+            </MediCareText>
+          </View>
+
+          {/* Mark Taken button — only show if enabled and not missed */}
+          {isEnabled && !isMissed && todayLog && (
+            <TouchableOpacity
+              style={[
+                styles.takenBtn,
+                isTaken && styles.takenBtnDone,
+              ]}
+              onPress={handleMarkTaken}
+              disabled={isTaken}
+            >
+              <MediCareText
+                tag="body2"
+                weight="SemiBold"
+                color={isTaken ? '#16A34A' : theme.primary}
+              >
+                {isTaken ? '✅ Taken' : 'Mark Taken'}
+              </MediCareText>
+            </TouchableOpacity>
+          )}
+
+          {/* Show missed badge */}
+          {isMissed && (
+            <View style={styles.missedBadge}>
+              <MediCareText tag="body2" weight="SemiBold" color="#EF4444">
+                ❌ Missed
+              </MediCareText>
+            </View>
+          )}
         </View>
       </View>
 
-      {/* Android three dot menu */}
-      <Modal visible={showMenu} transparent animationType="fade" onRequestClose={() => setShowMenu(false)}>
-        <TouchableOpacity style={styles.menuOverlay} onPress={() => setShowMenu(false)} activeOpacity={1}>
+      {/* Android three dot menu modal */}
+      <Modal
+        visible={showMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <TouchableOpacity
+          style={styles.menuOverlay}
+          onPress={() => setShowMenu(false)}
+          activeOpacity={1}
+        >
           <View style={styles.menuCard}>
-            <MediCareText tag="body" weight="SemiBold" color={theme.text[100]} style={styles.menuMedicineName}>
+            <MediCareText
+              tag="body"
+              weight="SemiBold"
+              color={theme.text[100]}
+              style={styles.menuMedicineName}
+            >
               {item.medicineName}
             </MediCareText>
             <View style={styles.menuDivider} />
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); handleToggle(!isEnabled); }}>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                handleToggle(!isEnabled);
+              }}
+            >
               <MediCareText tag="body" color={theme.black}>
                 {isEnabled ? '🔕 Turn Off' : '🔔 Turn On'}
               </MediCareText>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setShowMenu(false); setShowEdit(true); }}>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                setShowEdit(true);
+              }}
+            >
               <MediCareText tag="body" color={theme.black}>✏️ Edit Time</MediCareText>
             </TouchableOpacity>
           </View>
@@ -214,12 +289,24 @@ const handleSave = async () => {
       <Modal visible={showEdit} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <MediCareText tag="h3" weight="Bold" color={theme.text[110]} style={styles.modalTitle}>
+            <MediCareText
+              tag="h3"
+              weight="Bold"
+              color={theme.text[110]}
+              style={styles.modalTitle}
+            >
               Edit Reminder
             </MediCareText>
-            <MediCareText tag="body" weight="SemiBold" color={theme.text[110]} style={styles.label}>
+
+            <MediCareText
+              tag="body"
+              weight="SemiBold"
+              color={theme.text[110]}
+              style={styles.label}
+            >
               {item.medicineName}
             </MediCareText>
+
             <MediCareInput
               label="Dosage"
               value={dosage}
@@ -227,20 +314,29 @@ const handleSave = async () => {
               placeholder="e.g. 1 tablet"
               containerStyle={styles.input}
             />
-            <MediCareText tag="body" weight="SemiBold" color={theme.text[110]} style={styles.label}>
+
+            <MediCareText
+              tag="body"
+              weight="SemiBold"
+              color={theme.text[110]}
+              style={styles.label}
+            >
               Time (24-hour format)
             </MediCareText>
             <MediCareInput
               value={timings.morning || timings.noon || timings.night || ''}
               onChangeText={(text) => {
-                const slot = item.timings?.morning ? 'morning' : item.timings?.noon ? 'noon' : 'night';
-                setTimings(prev => ({ ...prev, [slot]: text }));
+                setTimings({ morning: text, noon: '', night: '' });
               }}
               placeholder="09:15"
               containerStyle={styles.input}
             />
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowEdit(false)}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setShowEdit(false)}
+              >
                 <MediCareText tag="body" color={theme.text[90]}>Cancel</MediCareText>
               </TouchableOpacity>
               <MediCareButton
@@ -261,13 +357,16 @@ const handleSave = async () => {
 const scheduleAlarmNotification = async (reminder: any, timings: any) => {
   const timeStr = timings.morning || timings.noon || timings.night;
   if (!timeStr) return;
+
   const [hours, minutes] = timeStr.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return;
+
   const triggerTime = getNextTriggerTime(hours, minutes);
+
   await notifee.createTriggerNotification(
     {
       id: `reminder-${reminder._id}`,
-      title: `🕑 Medicine Time`,
+      title: `🕒 Medicine Time`,
       body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
       android: {
         channelId: 'alarm_channel',
@@ -276,20 +375,18 @@ const scheduleAlarmNotification = async (reminder: any, timings: any) => {
         pressAction: { id: 'default' },
         loopSound: true,
         vibrationPattern: [500, 500, 500],
-        asForegroundService: false,
       },
     },
     {
       type: TriggerType.TIMESTAMP,
       timestamp: triggerTime,
-      alarmManager: { allowWhileIdle: true },
     }
   );
 };
 
 const getNextTriggerTime = (hours: number, minutes: number): number => {
   const now = new Date();
-  const trigger = new Date(now);
+  let trigger = new Date(now);
   trigger.setHours(hours, minutes, 0, 0);
   if (trigger.getTime() <= now.getTime()) {
     trigger.setDate(trigger.getDate() + 1);
@@ -330,11 +427,49 @@ const useStyle = makeStyles(theme => ({
     marginRight: 12,
   },
   reminderDetails: { justifyContent: 'center' },
-  rightActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  toggle: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
-  menuBtn: { padding: 6, marginLeft: 2 },
-  reminderFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  toggle: {
+    transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+  },
+  menuBtn: {
+    padding: 6,
+    marginLeft: 2,
+  },
+  reminderFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   footerText: { marginLeft: 6 },
+  takenBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.primary,
+  },
+  takenBtnDone: {
+    borderColor: '#16A34A',
+    backgroundColor: '#F0FDF4',
+  },
+  missedBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+  },
+
+  // Android menu
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.3)',
@@ -346,11 +481,27 @@ const useStyle = makeStyles(theme => ({
     borderRadius: 16,
     paddingVertical: 8,
     width: 220,
+    shadowColor: theme.shadow[100],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
     elevation: 8,
   },
-  menuMedicineName: { paddingHorizontal: 16, paddingVertical: 10 },
-  menuDivider: { height: 1, backgroundColor: theme.border[80], marginBottom: 4 },
-  menuItem: { paddingHorizontal: 16, paddingVertical: 14 },
+  menuMedicineName: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: theme.border[80],
+    marginBottom: 4,
+  },
+  menuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+
+  // Edit modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

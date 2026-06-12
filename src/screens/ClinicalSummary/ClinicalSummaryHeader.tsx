@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import { View, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { useNavigation, useTheme } from '@react-navigation/native';
 import MediCareText, { FontWeight } from '@src/components/Text/MediCareText';
 import { CloseSvg, DownloadSvg } from '@src/utils/icons';
@@ -13,92 +8,116 @@ import Config from 'react-native-config';
 import { useAppSelector } from '@src/redux/store';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { showAlert, successAlert } from '@src/helper/alert';
-import usePermission from '@src/hooks/usePermission';
+
+type TabType = 'summary' | 'sideEffects' | 'analytics' | 'healthRecord';
 
 interface Props {
   isSuccess: boolean;
+  activeTab: TabType;
+  tabData: string | null;
 }
 
-const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess }) => {
+const TAB_FILENAMES: Record<TabType, string> = {
+  summary: 'ClinicalSummary',
+  sideEffects: 'SideEffects',
+  analytics: 'HealthTimeline',
+  healthRecord: 'CaseDocumentation',
+};
+
+const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess, activeTab, tabData }) => {
   const theme = useTheme();
   const navigation = useNavigation();
   const styles = useStyles();
-  const token = useAppSelector(state => state.auth).token;
-  const { storagePermission } = usePermission();
+  const token = useAppSelector(state => state.auth.token);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownloadPdf = async () => {
-    const hasPermission = await storagePermission();
-    if (!hasPermission) {
+  const handleDownload = async () => {
+    if (!tabData) {
+      showAlert('No content to download yet');
+      return;
+    }
+
+    // For summary tab — download PDF from backend
+    if (activeTab === 'summary') {
+      setIsDownloading(true);
+      try {
+        const date = new Date();
+        const fileName = `ClinicalSummary_${Math.floor(date.getTime() / 1000)}.pdf`;
+        const fileUrl = `${Config.API_BASE_URL}/api/prescriptions/clinical-summary/pdf`;
+        const { dirs } = ReactNativeBlobUtil.fs;
+        const downloadPath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
+        ReactNativeBlobUtil.config({
+          fileCache: true,
+          addAndroidDownloads: {
+            useDownloadManager: true,
+            notification: true,
+            path: downloadPath,
+            description: 'Downloading Clinical Summary PDF',
+            mime: 'application/pdf',
+            mediaScannable: true,
+          },
+          path: downloadPath,
+        })
+          .fetch('GET', fileUrl, { Authorization: `Bearer ${token}` })
+          .then(() => {
+            successAlert('PDF downloaded successfully');
+            setIsDownloading(false);
+          })
+          .catch(() => {
+            showAlert('Failed to download PDF');
+            setIsDownloading(false);
+          });
+      } catch {
+        showAlert('Failed to start download');
+        setIsDownloading(false);
+      }
       return;
     }
 
     setIsDownloading(true);
-
     try {
       const date = new Date();
-      const fileName = `ClinicalSummary_${Math.floor(
-        date.getTime() / 1000,
-      )}.pdf`;
-      const fileUrl = `${Config.API_BASE_URL}/api/prescriptions/clinical-summary/pdf`;
-
+      const baseName = TAB_FILENAMES[activeTab];
+      const fileName = `${baseName}_${Math.floor(date.getTime() / 1000)}.txt`;
       const { dirs } = ReactNativeBlobUtil.fs;
-      const downloadPath = `${
-        Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir
-      }/${fileName}`;
-
-      ReactNativeBlobUtil.config({
-        fileCache: true,
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          path: downloadPath,
-          description: 'Downloading Clinical Summary PDF',
-          mime: 'application/pdf',
-          mediaScannable: true,
-        },
-        path: downloadPath,
-      })
-        .fetch('GET', fileUrl, {
-          Authorization: `Bearer ${token}`,
-        })
-        .then(res => {
-          console.log('Download Result:', res.path());
-          successAlert('PDF downloaded successfully');
-          setIsDownloading(false);
-        })
-        .catch(err => {
-          console.error('Download Error:', err);
-          showAlert('Failed to download PDF');
-          setIsDownloading(false);
+      const filePath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
+      await ReactNativeBlobUtil.fs.writeFile(filePath, tabData, 'utf8');
+      if (Platform.OS === 'android') {
+        await ReactNativeBlobUtil.android.addCompleteDownload({
+          title: fileName,
+          description: `${baseName} downloaded`,
+          mime: 'text/plain',
+          path: filePath,
+          showNotification: true,
         });
-    } catch (error) {
-      console.error('Download setup error:', error);
-      showAlert('Failed to start download');
+      }
+      successAlert(`${baseName} downloaded successfully`);
+    } catch (err) {
+      showAlert('Failed to download');
+    } finally {
       setIsDownloading(false);
     }
   };
 
+  const canDownload = isSuccess && !!tabData;
+
   return (
     <View style={styles.header}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.headerButton}
-      >
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
         <CloseSvg stroke={theme.black} width={24} height={24} />
       </TouchableOpacity>
       <MediCareText tag="h2" weight={FontWeight.Bold} color={theme.black}>
         Clinical Summary
       </MediCareText>
       <View style={styles.actionsContainer}>
-        {isSuccess && (
+        {canDownload && (
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={handleDownloadPdf}
+            onPress={handleDownload}
             disabled={isDownloading}
           >
             {isDownloading ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
+              <ActivityIndicator size="small" color={theme.primary} />
             ) : (
               <DownloadSvg stroke={theme.black} width={24} height={24} />
             )}
@@ -126,9 +145,7 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionsContainer: {
-    flexDirection: 'row',
-  },
+  actionsContainer: { flexDirection: 'row' },
 }));
 
 export default ClinicalSummaryHeader;

@@ -7,6 +7,7 @@ import { makeStyles } from '@src/hooks/makeStyle';
 import MediCareText, { FontWeight } from '@src/components/Text/MediCareText';
 import { CloseSvg } from '@src/utils/icons';
 import { useToast } from '@src/components/Toast/ToastProvider';
+import { t } from '@src/i18n/translations';
 import { useAppTheme } from '@src/context/ThemeContext';
 import notifee from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -56,7 +57,7 @@ const Settings = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <CloseSvg width={24} height={24} stroke={theme.white} />
         </TouchableOpacity>
-        <MediCareText tag="h3" weight={FontWeight.Bold} color={theme.white}>Settings</MediCareText>
+        <MediCareText tag="h3" weight={FontWeight.Bold} color={theme.white}>{t('settings.title', language)}{t('settings.title', language)}</MediCareText>
         <View style={styles.headerBtn} />
       </View>
 
@@ -64,15 +65,15 @@ const Settings = () => {
 
         {/* Appearance */}
         <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[80]} style={styles.sectionLabel}>
-          APPEARANCE
+          {t('settings.appearance', language)}
         </MediCareText>
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <MediCareText tag="body" style={styles.rowIcon}>🌙</MediCareText>
               <View>
-                <MediCareText tag="h4" weight={FontWeight.Medium} color={theme.black}>Dark Mode</MediCareText>
-                <MediCareText tag="body2" color={theme.text[80]}>Switch to a darker theme</MediCareText>
+                <MediCareText tag="h4" weight={FontWeight.Medium} color={theme.black}>{t('settings.darkMode', language)}</MediCareText>
+                <MediCareText tag="body2" color={theme.text[80]}>{t('settings.switchTheme', language)}</MediCareText>
               </View>
             </View>
             <Switch
@@ -86,7 +87,7 @@ const Settings = () => {
 
         {/* Language */}
         <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[80]} style={styles.sectionLabel}>
-          LANGUAGE
+          {t('settings.language', language)}
         </MediCareText>
         <View style={styles.card}>
           {LANGUAGES.map((lang, index) => (
@@ -105,7 +106,7 @@ const Settings = () => {
 
         {/* Notifications */}
         <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[80]} style={styles.sectionLabel}>
-          NOTIFICATIONS
+          {t('settings.notifications', language)}
         </MediCareText>
         <View style={styles.card}>
           <View style={styles.row}>

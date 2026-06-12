@@ -92,18 +92,12 @@ const handleSave = async () => {
         age: patientAge,
         gender: patientGender,
       },
-      tests: formData.tests?.map((test: any, index: number) => ({
-        ...test,
-        testDefinition:
-          (prescriptionData.tests?.[index] as any)?.testDefinition ||
-          test.testDefinition || null,
-        patientRelevance:
-          (prescriptionData.tests?.[index] as any)?.patientRelevance ||
-          test.patientRelevance || null,
-        validityLevel:
-          (prescriptionData.tests?.[index] as any)?.validityLevel ||
-          test.validityLevel || null,
-      })),
+      tests: formData.tests
+        ?.filter((test: any) => test.name && test.name.trim().length > 0)
+        .map((test: any) => ({
+          ...test,
+          status: test.status || 'pending',
+        })),
     };
 
     // If editing an existing prescription (_id exists), use update; otherwise save new
@@ -192,21 +186,12 @@ const handleSave = async () => {
       return Object.keys(filtered).length > 0;
     });
 
-    if (filteredArray.length === 0) return null;
+    const isMedicineOrTest =
+      key.toLowerCase().includes('medicine') || key.toLowerCase().includes('test');  
+    if (filteredArray.length === 0 && !isMedicineOrTest) return null;
 
-    const isMedicineSection =
-      key.toLowerCase().includes('medicine') ||
-      (items.length > 0 && items[0] && ('dosage' in items[0] || 'frequency' in items[0]));
+    const isMedicineSection = isMedicines;
     const isTestSection = key.toLowerCase().includes('test');
-
-    // Strip raw DB fields from test objects — only keep name and type for display/edit
-    if (isTestSection) {
-      itemsToRender = items.map((item: any) => ({
-        name: item.name || '',
-        type: item.type || '',
-      }));
-    }
-
     const label = isMedicineSection
       ? 'Medicine'
       : isTestSection
@@ -317,10 +302,17 @@ const handleSave = async () => {
   };
 
   const renderField = (key: string, value: any) => {
-    // Skip doctor and patient — we render them manually below
     if (key === 'doctor' || key === 'patient') return null;
-    if (value === null || shouldSkipField(key)) return null;
+    if (shouldSkipField(key)) return null;
 
+    // Always render medicines and tests even if empty — user can add manually
+    const isMedicineKey = key.toLowerCase().includes('medicine');
+    const isTestKey = key.toLowerCase().includes('test');
+    if ((isMedicineKey || isTestKey) && (value === null || value === undefined || (Array.isArray(value) && value.length === 0))) {
+      return renderArrayOfObjects(key, []);
+    }
+
+    if (value === null) return null;
     if (isArrayOfObjects(value)) return renderArrayOfObjects(key, value);
     if (isArrayOfStrings(value)) return renderArrayOfStrings(key, value);
     if (typeof value === 'object' && !Array.isArray(value))

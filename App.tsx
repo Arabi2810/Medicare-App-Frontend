@@ -60,49 +60,52 @@ async function displayMedicationNotification(title: string, body: string, data?:
 
 const AppInner: React.FC = () => {
   useEffect(() => {
-    createNotificationChannel();
+    (async () => {
+      await notifee.requestPermission();
+      createNotificationChannel();
 
-    const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
-      const title = remoteMessage.notification?.title || 'Medication Reminder';
-      const body = remoteMessage.notification?.body || 'Time to take your medicine';
-      await displayMedicationNotification(title, body, remoteMessage.data as Record<string, string>);
-    });
+      const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
+        const title = remoteMessage.notification?.title || 'Medication Reminder';
+        const body = remoteMessage.notification?.body || 'Time to take your medicine';
+        await displayMedicationNotification(title, body, remoteMessage.data as Record<string, string>);
+      });
 
-    const unsubscribeNotifee = notifee.onForegroundEvent(async ({ type, detail }) => {
-      if (type === EventType.ACTION_PRESS) {
-        const actionId = detail.pressAction?.id;
-        const reminderId = detail.notification?.data?.reminderId as string | undefined;
+      const unsubscribeNotifee = notifee.onForegroundEvent(async ({ type, detail }) => {
+        if (type === EventType.ACTION_PRESS) {
+          const actionId = detail.pressAction?.id;
+          const reminderId = detail.notification?.data?.reminderId as string | undefined;
 
-        if (actionId === 'took_it' && reminderId) {
-          try {
-            const token = store.getState().auth?.token;
-            if (token) {
-              await fetch(
-                `${require('react-native-config').default.API_BASE_URL}/api/reminders/${reminderId}/taken`,
-                { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
-              );
+          if (actionId === 'took_it' && reminderId) {
+            try {
+              const token = store.getState().auth?.token;
+              if (token) {
+                await fetch(
+                  `${require('react-native-config').default.API_BASE_URL}/api/reminders/${reminderId}/taken`,
+                  { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+                );
+              }
+            } catch (e) {
+              console.warn('Mark taken failed:', e);
             }
-          } catch (e) {
-            console.warn('Mark taken failed:', e);
           }
-        }
 
-        if (actionId === 'remind_later') {
-          await notifee.createTriggerNotification(
-            {
-              title: detail.notification?.title ?? 'Medication Reminder',
-              body: detail.notification?.body ?? 'Time to take your medicine',
-              android: { channelId: 'medication_reminders', importance: AndroidImportance.HIGH },
-              data: detail.notification?.data,
-            },
-            { type: 1, timestamp: Date.now() + 30 * 60 * 1000 } as any,
-          );
+          if (actionId === 'remind_later') {
+            await notifee.createTriggerNotification(
+              {
+                title: detail.notification?.title ?? 'Medication Reminder',
+                body: detail.notification?.body ?? 'Time to take your medicine',
+                android: { channelId: 'medication_reminders', importance: AndroidImportance.HIGH },
+                data: detail.notification?.data,
+              },
+              { type: 1, timestamp: Date.now() + 30 * 60 * 1000 } as any,
+            );
+          }
+          await notifee.cancelNotification(detail.notification?.id ?? '');
         }
-        await notifee.cancelNotification(detail.notification?.id ?? '');
-      }
-    });
+      });
 
-    return () => { unsubscribeFCM(); unsubscribeNotifee(); };
+      return () => { unsubscribeFCM(); unsubscribeNotifee(); };
+    })();
   }, []);
 
   return <Root />;

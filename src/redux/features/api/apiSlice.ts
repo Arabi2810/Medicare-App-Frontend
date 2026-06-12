@@ -36,6 +36,6 @@ export const apiSlice = createApi({
     }
     return result;
   },
-  tagTypes: ['ActiveMedications', 'Reminders', 'Prescriptions', 'Analytics', 'PendingTests', 'Profile'],
+  tagTypes: ['ActiveMedications', 'Reminders', 'Prescriptions', 'Analytics', 'PendingTests', 'Profile', 'DailyLog'],
   endpoints: () => ({}),
 });

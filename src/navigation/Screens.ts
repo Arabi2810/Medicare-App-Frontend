@@ -1,3 +1,4 @@
+// src/navigation/Screens.ts
 import { NavigatorScreenParams } from '@react-navigation/native';
 import { UploadFileType } from '@src/screens/UploadPrescription/UploadPrescription';
 import { UploadPrescriptionResponse } from '@src/utils/types';
@@ -24,7 +25,7 @@ export type RootStackParamList = {
       name: string | null;
     };
   };
-  CompleteHistory: { prescriptionId: string, userId: string };
+  CompleteHistory: { prescriptionId: string; userId: string };
   Profile: undefined;
   PhoneAuth: undefined;
   OtpVerify: {
@@ -37,9 +38,9 @@ export type DrawerParamList = {
   Dashboard: NavigatorScreenParams<BottomTabParamList>;
   PendingTests: undefined;
   ClinicalSummary: undefined;
+  Settings: undefined;
   Profile: undefined;
 };
-
 
 export type BottomTabParamList = {
   Home: undefined;

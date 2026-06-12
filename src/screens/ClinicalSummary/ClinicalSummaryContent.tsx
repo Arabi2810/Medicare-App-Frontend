@@ -1,141 +1,189 @@
+// src/screens/ClinicalSummary/ClinicalSummaryContent.tsx
 import React from 'react';
 import { View } from 'react-native';
 import { useTheme } from '@react-navigation/native';
 import MediCareText, { FontWeight } from '@src/components/Text/MediCareText';
-
 import { makeStyles } from '@src/hooks/makeStyle';
 
 interface ClinicalSummaryContentProps {
-    narrative: string;
+  narrative: string;
 }
 
-const ClinicalSummaryContent: React.FC<ClinicalSummaryContentProps> = ({
-    narrative,
-}) => {
-    const theme = useTheme();
-    const styles = useStyles();
+const ClinicalSummaryContent: React.FC<ClinicalSummaryContentProps> = ({ narrative }) => {
+  const theme = useTheme();
+  const styles = useStyles();
 
-    const renderInlineMarkdown = (text: string) => {
-        const parts = text.split(/(\*\*.*?\*\*)/g);
-        return parts.map((part, index) => {
-            if (part.startsWith('**') && part.endsWith('**')) {
-                return (
-                    <MediCareText
-                        key={index}
-                        weight={FontWeight.Bold}
-                        style={{ color: theme.text?.[110] ?? '#000' }}
-                    >
-                        {part.slice(2, -2)}
-                    </MediCareText>
-                );
-            }
-            return part;
-        });
-    };
+  // Render inline bold (**text**)
+  const renderInline = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <MediCareText key={i} weight={FontWeight.SemiBold} style={styles.body}>
+            {part.slice(2, -2)}
+          </MediCareText>
+        );
+      }
+      return part ? (
+        <MediCareText key={i} style={styles.body}>
+          {part}
+        </MediCareText>
+      ) : null;
+    });
+  };
 
-    const renderMarkdown = (text: string) => {
-        const lines = text.split('\n');
-        return lines.map((line, index) => {
-            // Handle Headers
-            if (line.startsWith('## ')) {
-                return (
-                    <MediCareText
-                        key={index}
-                        tag="h2"
-                        weight={FontWeight.Bold}
-                        style={styles.h2}
-                    >
-                        {line.replace('## ', '')}
-                    </MediCareText>
-                );
-            }
-            if (line.startsWith('### ')) {
-                return (
-                    <MediCareText
-                        key={index}
-                        tag="h3"
-                        weight={FontWeight.SemiBold}
-                        style={styles.h3}
-                    >
-                        {line.replace('### ', '')}
-                    </MediCareText>
-                );
-            }
+  const renderMarkdown = (text: string) => {
+    const lines = text.split('\n');
+    const elements: React.ReactNode[] = [];
+    let i = 0;
 
-            // Handle Bullet Points
-            if (line.trim().startsWith('* ')) {
-                return (
-                    <View key={index} style={styles.listItem}>
-                        <MediCareText style={styles.bullet}>•</MediCareText>
-                        <MediCareText style={styles.listText}>
-                            {renderInlineMarkdown(line.trim().replace('* ', ''))}
-                        </MediCareText>
-                    </View>
-                );
-            }
+    while (i < lines.length) {
+      const line = lines[i];
+      const trimmed = line.trim();
 
-            // Plain Text / Paragraphs
-            if (line.trim() === '') {
-                return <View key={index} style={styles.spacer} />;
-            }
+      if (!trimmed) {
+        elements.push(<View key={`space-${i}`} style={styles.spacer} />);
+        i++;
+        continue;
+      }
 
-            return (
-                <MediCareText key={index} tag="body" style={styles.paragraph}>
-                    {renderInlineMarkdown(line)}
-                </MediCareText>
-            );
-        });
-    };
+      // ## H2
+      if (trimmed.startsWith('## ')) {
+        elements.push(
+          <MediCareText key={i} weight={FontWeight.Bold} style={styles.h2}>
+            {trimmed.slice(3)}
+          </MediCareText>,
+        );
+        i++;
+        continue;
+      }
 
-    return <View style={styles.card}>{renderMarkdown(narrative)}</View>;
+      // ### H3
+      if (trimmed.startsWith('### ')) {
+        elements.push(
+          <MediCareText key={i} weight={FontWeight.SemiBold} style={styles.h3}>
+            {trimmed.slice(4)}
+          </MediCareText>,
+        );
+        i++;
+        continue;
+      }
+
+      // Bullet: * or - prefix
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+        const content = trimmed.slice(2);
+        elements.push(
+          <View key={i} style={styles.listItem}>
+            <View style={styles.bulletDot} />
+            <View style={styles.bulletContent}>
+              {renderInline(content)}
+            </View>
+          </View>,
+        );
+        i++;
+        continue;
+      }
+
+      // Numbered list: 1. 2. etc.
+      const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      if (numberedMatch) {
+        elements.push(
+          <View key={i} style={styles.listItem}>
+            <MediCareText weight={FontWeight.SemiBold} style={styles.numberedIndex}>
+              {numberedMatch[1]}.
+            </MediCareText>
+            <View style={styles.bulletContent}>
+              {renderInline(numberedMatch[2])}
+            </View>
+          </View>,
+        );
+        i++;
+        continue;
+      }
+
+      elements.push(
+        <MediCareText key={i} style={styles.paragraph}>
+          {renderInline(trimmed)}
+        </MediCareText>,
+      );
+      i++;
+    }
+
+    return elements;
+  };
+
+  return <View style={styles.card}>{renderMarkdown(narrative)}</View>;
 };
 
 const useStyles = makeStyles(theme => ({
-    card: {
-        backgroundColor: theme.white,
-        borderRadius: 16,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: theme.border[80],
-    },
-    h2: {
-        marginTop: 24,
-        marginBottom: 12,
-        color: theme.colors.primary,
-    },
-    h3: {
-        marginTop: 18,
-        marginBottom: 8,
-        color: theme.text[110],
-    },
-    paragraph: {
-        marginBottom: 12,
-        lineHeight: 22,
-        color: theme.text[110],
-    },
-    listItem: {
-        flexDirection: 'row',
-        marginBottom: 8,
-        paddingLeft: 4,
-    },
-    bullet: {
-        marginRight: 8,
-        fontSize: 18,
-        color: theme.colors.primary,
-    },
-    listText: {
-        flex: 1,
-        lineHeight: 22,
-        color: theme.text[110],
-    },
-    spacer: {
-        height: 8,
-    },
+  card: {
+    backgroundColor: theme.white,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: theme.border[80],
+  },
+  h2: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: theme.primary,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  h3: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: theme.text[110],
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: theme.text[110],
+  },
+  paragraph: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: theme.text[110],
+    marginBottom: 8,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+    paddingLeft: 4,
+  },
+  bulletDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.primary,
+    marginTop: 8,
+    marginRight: 10,
+    flexShrink: 0,
+  },
+  numberedIndex: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: theme.primary,
+    marginRight: 8,
+    flexShrink: 0,
+    minWidth: 20,
+  },
+  bulletContent: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  spacer: {
+    height: 6,
+  },
 }));
 
 export default ClinicalSummaryContent;
