@@ -23,6 +23,9 @@ export const t = (key: string, lang: Lang): string => {
     'common.cancel':                { English: 'Cancel',                'বাংলা': 'বাতিল' },
     'common.edit':                  { English: 'Edit',                  'বাংলা': 'সম্পাদনা' },
     'common.delete':                { English: 'Delete',                'বাংলা': 'মুছুন' },
+    'settings.switchTheme':         { English: 'Switch to darker theme', 'বাংলা': 'গাঢ় থিমে পরিবর্তন করুন' },
+    'settings.appName':              { English: 'MediCare',              'বাংলা': 'মেডিকেয়ার' },
+    'settings.appDesc':              { English: 'AI-Powered Health App', 'বাংলা': 'এআই-চালিত স্বাস্থ্য অ্যাপ' },
   };
   return translations[key]?.[lang] ?? translations[key]?.['English'] ?? key;
 };

@@ -6,25 +6,31 @@ export const prescriptionApi = apiSlice.injectEndpoints({
     getActiveMedications: builder.query({
       query: () => ({ url: '/api/prescriptions/active-medications' }),
       providesTags: ['ActiveMedications'],
+      keepUnusedDataFor: 86400,
     }),
     getReminders: builder.query({
       query: () => ({ url: '/api/prescriptions/reminders' }),
       providesTags: ['Reminders'],
+      keepUnusedDataFor: 86400,
     }),
     getPrescriptions: builder.query({
       query: () => ({ url: '/api/prescriptions' }),
       providesTags: ['Prescriptions'],
+      keepUnusedDataFor: 86400,
     }),
     getAnalytics: builder.query({
       query: () => ({ url: 'api/prescriptions/insights' }),
       providesTags: ['Analytics'],
+      keepUnusedDataFor: 86400,
     }),
     getPrescriptionDetails: builder.query({
       query: (id: string) => ({ url: `api/prescriptions/${id}/details` }),
+      keepUnusedDataFor: 86400,
     }),
     getPendingTests: builder.query({
       query: () => ({ url: 'api/prescriptions/tests/pending' }),
       providesTags: ['PendingTests'],
+      keepUnusedDataFor: 86400,
     }),
     updateReminder: builder.mutation({
       query: ({ reminderId, data }: { reminderId: string; data: any }) => ({
@@ -104,10 +110,12 @@ export const prescriptionApi = apiSlice.injectEndpoints({
     getTodayProgress: builder.query({
       query: () => ({ url: '/api/daily-log/today' }),
       providesTags: ['DailyLog'],
+      keepUnusedDataFor: 86400,
     }),
     getMissedMedicines: builder.query({
       query: () => ({ url: '/api/daily-log/missed' }),
       providesTags: ['DailyLog'],
+      keepUnusedDataFor: 86400,
     }),
     markMedicineTaken: builder.mutation({
       query: (logId: string) => ({

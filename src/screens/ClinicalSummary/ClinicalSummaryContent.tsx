@@ -61,7 +61,7 @@ const ClinicalSummaryContent: React.FC<ClinicalSummaryContentProps> = ({ narrati
       // ### H3
       if (trimmed.startsWith('### ')) {
         elements.push(
-          <MediCareText key={i} weight={FontWeight.SemiBold} style={styles.h3}>
+          <MediCareText key={i} weight={FontWeight.Bold} style={styles.h3}>
             {trimmed.slice(4)}
           </MediCareText>,
         );
@@ -69,7 +69,6 @@ const ClinicalSummaryContent: React.FC<ClinicalSummaryContentProps> = ({ narrati
         continue;
       }
 
-      // Bullet: * or - prefix
       if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
         const content = trimmed.slice(2);
         elements.push(
@@ -84,7 +83,6 @@ const ClinicalSummaryContent: React.FC<ClinicalSummaryContentProps> = ({ narrati
         continue;
       }
 
-      // Numbered list: 1. 2. etc.
       const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
       if (numberedMatch) {
         elements.push(
@@ -128,7 +126,7 @@ const useStyles = makeStyles(theme => ({
     borderWidth: 1,
     borderColor: theme.border[80],
   },
-  h2: {
+ h2: {
     fontSize: 16,
     lineHeight: 22,
     color: theme.primary,
@@ -136,7 +134,7 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 8,
   },
   h3: {
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
     color: theme.text[110],
     marginTop: 14,

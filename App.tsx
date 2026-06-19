@@ -13,6 +13,7 @@ import { ThemeProvider, useAppTheme } from '@src/context/ThemeContext';
 import { ToastProvider, setGlobalToast } from '@src/components/Toast/ToastProvider';
 import { useToast } from '@src/components/Toast/ToastProvider';
 import { ToastType } from '@src/components/Toast/Toast';
+import { Platform, Linking } from 'react-native';
 
 const ToastBridge: React.FC = () => {
   const { showToast } = useToast();
@@ -63,9 +64,16 @@ async function displayMedicationNotification(title: string, body: string, data?:
 
 const AppInner: React.FC = () => {
   useEffect(() => {
-    (async () => {
+ (async () => {
       await notifee.requestPermission();
-      createNotificationChannel();
+      await createNotificationChannel();
+
+      if (Platform.OS === 'android' && Platform.Version >= 31) {
+        const settings = await notifee.getNotificationSettings();
+        if (settings.android?.alarm !== 1) {
+          await notifee.openAlarmPermissionSettings();
+        }
+      }
 
       const unsubscribeFCM = messaging().onMessage(async remoteMessage => {
         const title = remoteMessage.notification?.title || 'Medication Reminder';

@@ -26,6 +26,8 @@ import DiagnosisSymptoms from './components/DiagnosisSymptoms';
 import { Prescription } from '@src/utils/types';
 import Tests from './components/Tests';
 import { useIsFocused } from '@react-navigation/native';
+
+
 type Props = NativeStackScreenProps<RootStackParamList, 'HistoryDetails'>;
 
 const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
@@ -86,18 +88,39 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
     );
   }
 
-  if (error || !prescription) {
+  if (error && !prescription) {
+    const isNetworkError = (error as any)?.status === 'FETCH_ERROR' || !(error as any)?.status;
     return (
       <View style={[styles.container, styles.center]}>
-        <MediCareText color={theme.error[100]}>
-          Failed to load prescription details.
+        <MediCareText tag="h4" weight="SemiBold" color={theme.text[100]}>
+          {isNetworkError ? 'No internet connection' : 'Something went wrong'}
         </MediCareText>
+        <MediCareText
+          tag="body2"
+          color={theme.text[80]}
+          style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 30 }}
+        >
+          {isNetworkError
+            ? 'Check your connection and try again.'
+            : 'Could not load this prescription. Please try again.'}
+        </MediCareText>
+        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+          <MediCareText color={theme.primary} weight="SemiBold">Retry</MediCareText>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.retryButton}
           onPress={() => navigation.goBack()}
         >
-          <MediCareText color={theme.primary}>Go Back</MediCareText>
+          <MediCareText color={theme.text[80]}>Go Back</MediCareText>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!prescription) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -118,7 +141,7 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.contentContainer}>
 
-          {prescription.imageUrl && (
+         {prescription.imageUrl && (
             <TouchableOpacity
               style={styles.viewOriginalButton}
               onPress={() => setShowImage(!showImage)}
@@ -128,13 +151,22 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
               </MediCareText>
             </TouchableOpacity>
           )}
-
-          {showImage && prescription.imageUrl && (
-            <Image
-              source={{ uri: prescription.imageUrl }}
-              style={styles.prescriptionImage}
-              resizeMode="contain"
-            />
+         {showImage && prescription.imageUrl && (
+            <ScrollView
+              style={styles.prescriptionImageContainer}
+              maximumZoomScale={5}
+              minimumZoomScale={1}
+              bouncesZoom
+              centerContent
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+            >
+              <Image
+                source={{ uri: prescription.imageUrl }}
+                style={styles.prescriptionImage}
+                resizeMode="contain"
+              />
+            </ScrollView>
           )}
 
           <PatientInfo
@@ -295,6 +327,15 @@ const useStyle = makeStyles(theme => ({
     borderColor: '#EF4444',
     backgroundColor: theme.white,
   },
+
+  prescriptionImageContainer: {
+    width: '100%',
+    height: 350,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#f3f4f6',
+  },
+
 }));
 
 export default HistoryDetails;

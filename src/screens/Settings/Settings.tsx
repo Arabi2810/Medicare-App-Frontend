@@ -9,8 +9,9 @@ import { CloseSvg } from '@src/utils/icons';
 import { useToast } from '@src/components/Toast/ToastProvider';
 import { t } from '@src/i18n/translations';
 import { useAppTheme } from '@src/context/ThemeContext';
-import notifee from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useGetRemindersQuery } from '@src/redux/pescription/pescription';
+import { scheduleAllReminderAlarms, cancelAllReminderAlarms } from '@src/utils/alarmScheduler';
 
 type Language = 'English' | 'বাংলা';
 const LANGUAGES: Language[] = ['English', 'বাংলা'];
@@ -20,18 +21,24 @@ const Settings = () => {
   const navigation = useNavigation();
   const styles = useStyles();
   const { showToast } = useToast();
-  const { isDark, toggleTheme } = useAppTheme();
+  const { isDark, toggleTheme, language, setLanguage } = useAppTheme();
 
-  const [language, setLanguage] = useState<Language>('English');
   const [medicationReminders, setMedicationReminders] = useState(true);
+  const { data: remindersData } = useGetRemindersQuery({});
+  const reminders = Array.isArray(remindersData) ? remindersData : remindersData?.data || [];
+  useEffect(() => {
+    AsyncStorage.getItem('medicationRemindersEnabled').then(val => {
+      setMedicationReminders(val !== 'false');
+    });
+  }, []);
 
   const handleDarkModeToggle = (val: boolean) => {
     toggleTheme(val);
     showToast(val ? 'Dark mode enabled' : 'Light mode enabled', 'info');
   };
 
-  const handleLanguageSelect = (lang: Language) => {
-    setLanguage(lang);
+ const handleLanguageSelect = (lang: Language) => {
+    setLanguage(lang as any);
     showToast(`Language set to ${lang}`, 'success');
   };
 
@@ -39,27 +46,27 @@ const Settings = () => {
     setMedicationReminders(val);
     try {
       if (!val) {
-        await notifee.cancelAllNotifications();
+        await cancelAllReminderAlarms(reminders);
         await AsyncStorage.setItem('medicationRemindersEnabled', 'false');
         showToast('Medication reminders turned off', 'warning');
       } else {
         await AsyncStorage.setItem('medicationRemindersEnabled', 'true');
-        showToast('Medication reminders turned on — re-open the Reminders screen to reschedule', 'success');
+        await scheduleAllReminderAlarms(reminders);
+        showToast('Medication reminders turned on', 'success');
       }
     } catch (e) {
       showToast('Failed to update notification setting', 'error');
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <CloseSvg width={24} height={24} stroke={theme.white} />
         </TouchableOpacity>
-        <MediCareText tag="h3" weight={FontWeight.Bold} color={theme.white}>{t('settings.title', language)}{t('settings.title', language)}</MediCareText>
+        
         <View style={styles.headerBtn} />
-      </View>
+      </View><MediCareText tag="h3" weight={FontWeight.Bold} color={theme.white}>{t('settings.title', language)}</MediCareText>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
@@ -113,8 +120,8 @@ const Settings = () => {
             <View style={styles.rowLeft}>
               <MediCareText tag="body" style={styles.rowIcon}>💊</MediCareText>
               <View>
-                <MediCareText tag="h4" weight={FontWeight.Medium} color={theme.black}>Medication Reminders</MediCareText>
-                <MediCareText tag="body2" color={theme.text[80]}>Reminders to take your medicines</MediCareText>
+                <MediCareText tag="h4" weight={FontWeight.Medium} color={theme.black}>{t('settings.medicationReminders', language)}</MediCareText>
+                <MediCareText tag="body2" color={theme.text[80]}>{t('settings.medicationDesc', language)}</MediCareText>
               </View>
             </View>
             <Switch
@@ -128,16 +135,16 @@ const Settings = () => {
 
         {/* About */}
         <MediCareText tag="body" weight={FontWeight.SemiBold} color={theme.text[80]} style={styles.sectionLabel}>
-          ABOUT
+          {t('settings.about', language)}
         </MediCareText>
         <View style={styles.card}>
           <View style={[styles.infoRow, styles.rowBorder]}>
-            <MediCareText tag="h4" weight={FontWeight.Regular} color={theme.black}>Version</MediCareText>
+            <MediCareText tag="h4" weight={FontWeight.Regular} color={theme.black}>{t('settings.version', language)}</MediCareText>
             <MediCareText tag="body" color={theme.text[80]}>1.0.0</MediCareText>
           </View>
           <View style={styles.infoRow}>
-            <MediCareText tag="h4" weight={FontWeight.Regular} color={theme.black}>MediCare</MediCareText>
-            <MediCareText tag="body" color={theme.text[80]}>AI-Powered Health App</MediCareText>
+            <MediCareText tag="h4" weight={FontWeight.Regular} color={theme.black}>{t('settings.appName', language)}</MediCareText>
+            <MediCareText tag="body" color={theme.text[80]}>{t('settings.appDesc', language)}</MediCareText>
           </View>
         </View>
 
@@ -198,3 +205,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export default Settings;
+
+function useEffect(arg0: () => void, arg1: never[]) {
+  throw new Error('Function not implemented.');
+}

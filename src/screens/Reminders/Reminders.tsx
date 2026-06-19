@@ -17,67 +17,25 @@ import NotificationIcon from '../../assets/icons/notification.svg';
 import ReminderCard from './ReminderCard';
 import notifee, { TriggerType, RepeatFrequency } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { scheduleAllReminderAlarms, cancelAllReminderAlarms } from '@src/utils/alarmScheduler';
 
 const Reminders = () => {
   const styles = useStyle();
   const theme = useTheme();
   const navigation = useNavigation();
-  const { data, isLoading, error } = useGetRemindersQuery({});
+  const { data, isLoading, error, refetch, isFetching } = useGetRemindersQuery({});
 
   const reminders = Array.isArray(data) ? data : data?.data || [];
   const scheduledCount = reminders.length;
+  
 
   useEffect(() => {
     if (!reminders || reminders.length === 0) return;
     AsyncStorage.getItem('medicationRemindersEnabled').then(async val => {
-      if (val === 'false') return;
-      for (const reminder of reminders) {
-      if ((reminder as any).status === 'paused') continue;
-        const timings = reminder.timings;
-        const schedules = reminder.schedules || {};
-        const slots: Array<['morning' | 'noon' | 'night', string | undefined]> = [
-          ['morning', timings?.morning],
-          ['noon', timings?.noon],
-          ['night', timings?.night],
-        ];
-
-        for (const [slotName, timeStr] of slots) {
-          if (!schedules[slotName] || !timeStr) continue;
-          const [hours, minutes] = timeStr.split(':').map(Number);
-          if (isNaN(hours) || isNaN(minutes)) continue;
-
-          const now = new Date();
-          const trigger = new Date(now);
-          trigger.setHours(hours, minutes, 0, 0);
-          if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
-
-          try {
-            await notifee.createTriggerNotification(
-              {
-                id: `reminder-${(reminder as any)._id}-${slotName}`,
-                title: '🕑 Medicine Time',
-                body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
-                android: {
-                  channelId: 'alarm_channel',
-                  sound: 'alarm_sound',
-                  importance: 4,
-                  pressAction: { id: 'default' },
-                  loopSound: true,
-                  vibrationPattern: [500, 500, 500],
-                },
-              },
-              {
-                type: TriggerType.TIMESTAMP,
-                timestamp: trigger.getTime(),
-                repeatFrequency: RepeatFrequency.DAILY,
-                alarmManager: { allowWhileIdle: true },
-              },
-            );
-          } catch (e) {
-            console.warn('Failed to schedule reminder:', (reminder as any)._id, slotName, e);
-          }
-        }
-
+      if (val === 'false') {
+        await cancelAllReminderAlarms(reminders);
+      } else {
+        await scheduleAllReminderAlarms(reminders);
       }
     });
   }, [reminders]);
@@ -102,16 +60,30 @@ const Reminders = () => {
     );
   }
 
-  if (error) {
+  if (error && !data) {
+    const isNetworkError = (error as any)?.status === 'FETCH_ERROR' || !(error as any)?.status;
     return (
       <View style={[styles.container, styles.center]}>
-        <MediCareText color={theme.error[100]}>
-          Failed to load reminders.
+        <MediCareText tag="h4" weight="SemiBold" color={theme.text[100]}>
+          {isNetworkError ? 'No internet connection' : 'Something went wrong'}
         </MediCareText>
+        <MediCareText
+          tag="body2"
+          color={theme.text[80]}
+          style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 30 }}
+        >
+          {isNetworkError
+            ? 'Check your connection and try again. Already-scheduled reminders will still go off on time.'
+            : 'Please try again in a moment.'}
+        </MediCareText>
+        <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
+          <MediCareText color={theme.white} weight="SemiBold">
+            {isFetching ? 'Retrying...' : 'Retry'}
+          </MediCareText>
+        </TouchableOpacity>
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
@@ -178,6 +150,13 @@ const useStyle = makeStyles(theme => ({
   },
   listContent: { padding: 20, paddingTop: 20, paddingBottom: 40 },
   emptyState: { alignItems: 'center', marginTop: 40 },
+  retryBtn: {
+    marginTop: 20,
+    backgroundColor: theme.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
 }));
 
 export default Reminders;

@@ -51,12 +51,27 @@ const PendingTests = () => {
     );
   }
 
-  if (error) {
+  if (error && !data) {
+    const isNetworkError = (error as any)?.status === 'FETCH_ERROR' || !(error as any)?.status;
     return (
       <View style={[styles.container, styles.center]}>
-        <MediCareText color={theme.error[100]}>
-          Failed to load pending tests.
+        <MediCareText tag="h4" weight="SemiBold" color={theme.text[100]}>
+          {isNetworkError ? 'No internet connection' : 'Something went wrong'}
         </MediCareText>
+        <MediCareText
+          tag="body2"
+          color={theme.text[80]}
+          style={{ marginTop: 8, textAlign: 'center', paddingHorizontal: 30 }}
+        >
+          {isNetworkError
+            ? 'Check your connection and try again.'
+            : 'Please try again in a moment.'}
+        </MediCareText>
+        <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
+          <MediCareText color={theme.white} weight="SemiBold">
+            {isFetching ? 'Retrying...' : 'Retry'}
+          </MediCareText>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -143,6 +158,13 @@ const useStyle = makeStyles(theme => ({
   listContent: {
     padding: 20,
     paddingBottom: 40,
+  },
+  retryBtn: {
+    marginTop: 20,
+    backgroundColor: theme.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
 }));
 

@@ -16,6 +16,15 @@ interface Props {
   activeTab: TabType;
   tabData: string | null;
 }
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/^## (.*)$/gm, '\n$1\n' + '='.repeat(40))
+    .replace(/^### (.*)$/gm, '\n$1\n' + '-'.repeat(30))
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/^\* /gm, '• ')
+    .replace(/^- /gm, '• ')
+    .trim();
+};
 
 const TAB_FILENAMES: Record<TabType, string> = {
   summary: 'ClinicalSummary',
@@ -81,7 +90,7 @@ const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess, activeTab, tabData 
       const fileName = `${baseName}_${Math.floor(date.getTime() / 1000)}.txt`;
       const { dirs } = ReactNativeBlobUtil.fs;
       const filePath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
-      await ReactNativeBlobUtil.fs.writeFile(filePath, tabData, 'utf8');
+      await ReactNativeBlobUtil.fs.writeFile(filePath, stripMarkdown(tabData), 'utf8');
       if (Platform.OS === 'android') {
         await ReactNativeBlobUtil.android.addCompleteDownload({
           title: fileName,

@@ -74,24 +74,32 @@ const ClinicalSummary = () => {
           data: summaryQuery.data?.data?.aiNarrative,
           isLoading: summaryQuery.isLoading,
           isError: summaryQuery.isError,
+          error: summaryQuery.error,
+          refetch: summaryQuery.refetch,
         };
       case 'sideEffects':
         return {
           data: sideEffectsQuery.data?.data,
           isLoading: sideEffectsQuery.isLoading,
           isError: sideEffectsQuery.isError,
+          error: sideEffectsQuery.error,
+          refetch: sideEffectsQuery.refetch,
         };
       case 'analytics':
         return {
           data: analyticsQuery.data?.data,
           isLoading: analyticsQuery.isLoading,
           isError: analyticsQuery.isError,
+          error: analyticsQuery.error,
+          refetch: analyticsQuery.refetch,
         };
       case 'healthRecord':
         return {
           data: healthRecordQuery.data?.data,
           isLoading: healthRecordQuery.isLoading,
           isError: healthRecordQuery.isError,
+          error: healthRecordQuery.error,
+          refetch: healthRecordQuery.refetch,
         };
     }
   };
@@ -126,7 +134,7 @@ const ClinicalSummary = () => {
   }, []);
 
   const activeQuery = getActiveQuery();
-  const { data: narrative, isLoading, isError } = activeQuery;
+  const { data: narrative, isLoading, isError, error, refetch } = activeQuery;
   const currentTabData: string | null =
     narrative && typeof narrative === 'string' ? narrative : null;
 
@@ -148,9 +156,32 @@ const ClinicalSummary = () => {
     }
 
     if (isError) {
+      const status = (error as any)?.status;
+      const isNetworkError = status === 'FETCH_ERROR' || !status;
+      const isRateLimited = status === 429;
+
+      let title = 'Something went wrong';
+      let message = 'Please try again in a moment.';
+
+      if (isNetworkError) {
+        title = 'No internet connection';
+        message = 'Check your connection and try again.';
+      } else if (isRateLimited) {
+        title = 'Too many requests';
+        message = 'You\'ve generated a few summaries in a row. Wait about a minute, then retry.';
+      }
+
       return (
         <View style={styles.center}>
-          <MediCareText style={styles.errorText}>Failed to load. Please try again.</MediCareText>
+          <MediCareText tag="h4" weight="SemiBold" style={styles.statusText}>
+            {title}
+          </MediCareText>
+          <MediCareText style={[styles.errorText, { marginTop: 8 }]}>
+            {message}
+          </MediCareText>
+          <TouchableOpacity onPress={() => refetch?.()} style={styles.retryBtn}>
+            <MediCareText color={theme.white} weight="SemiBold">Retry</MediCareText>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -275,6 +306,13 @@ const useStyles = makeStyles((theme, insets: EdgeInsets) => ({
   errorText: {
     color: '#FF3B30',
     textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 16,
+    backgroundColor: theme.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
 }));
 
