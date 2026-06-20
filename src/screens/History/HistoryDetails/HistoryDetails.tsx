@@ -26,12 +26,13 @@ import DiagnosisSymptoms from './components/DiagnosisSymptoms';
 import { Prescription } from '@src/utils/types';
 import Tests from './components/Tests';
 import { useIsFocused } from '@react-navigation/native';
-
+import { useToast } from '@src/components/Toast/ToastProvider';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HistoryDetails'>;
 
 const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
   const { id } = route.params;
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const styles = useStyle();
@@ -67,7 +68,7 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
               await deletePrescription(id).unwrap();
               navigation.goBack();
             } catch (err) {
-              Alert.alert('Error', 'Failed to delete prescription');
+               showToast('Failed to delete prescription', 'error');
             }
           },
         },
@@ -152,8 +153,9 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
             </TouchableOpacity>
           )}
          {showImage && prescription.imageUrl && (
-            <ScrollView
+           <ScrollView
               style={styles.prescriptionImageContainer}
+              contentContainerStyle={styles.prescriptionImageContent}
               maximumZoomScale={5}
               minimumZoomScale={1}
               bouncesZoom
@@ -278,11 +280,10 @@ const useStyle = makeStyles(theme => ({
     borderWidth: 1,
     borderColor: '#bfdbfe',
   },
-  prescriptionImage: {
-    width: '100%',
-    height: 300,
+prescriptionImage: {
+    width: 350,
+    height: 350,
     borderRadius: 12,
-    marginBottom: 12,
     backgroundColor: '#f3f4f6',
   },
 
@@ -328,6 +329,11 @@ const useStyle = makeStyles(theme => ({
     backgroundColor: theme.white,
   },
 
+prescriptionImageContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   prescriptionImageContainer: {
     width: '100%',
     height: 350,
@@ -339,3 +345,4 @@ const useStyle = makeStyles(theme => ({
 }));
 
 export default HistoryDetails;
+

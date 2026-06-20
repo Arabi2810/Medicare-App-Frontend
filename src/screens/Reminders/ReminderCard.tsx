@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
-  Switch,
   ActionSheetIOS,
   Platform,
 } from 'react-native';
@@ -53,7 +52,7 @@ const ReminderCard: React.FC<Props> = ({ item }) => {
       }).unwrap();
     } catch (error) {
       setIsEnabled(!value);
-      Alert.alert('Error', 'Failed to update reminder status');
+      showToast('Failed to update reminder status', 'error');
       return;
     }
     try {
@@ -210,13 +209,6 @@ const handleSave = async () => {
           </View>
 
           <View style={styles.rightActions}>
-            <Switch
-              value={isEnabled}
-              onValueChange={handleToggle}
-              trackColor={{ false: theme.border[80], true: theme.primary + '55' }}
-              thumbColor={isEnabled ? theme.primary : theme.text[100]}
-              style={styles.toggle}
-            />
             <TouchableOpacity onPress={showThreeDotMenu} style={styles.menuBtn}>
               <MediCareText tag="h3" color={theme.text[100]}>⋮</MediCareText>
             </TouchableOpacity>
@@ -351,7 +343,6 @@ const useStyle = makeStyles(theme => ({
   },
   reminderDetails: { justifyContent: 'center' },
   rightActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  toggle: { transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] },
   menuBtn: { padding: 6, marginLeft: 2 },
   reminderFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   footerText: { marginLeft: 6 },

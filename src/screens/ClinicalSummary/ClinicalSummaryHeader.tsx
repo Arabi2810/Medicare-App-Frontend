@@ -33,6 +33,13 @@ const TAB_FILENAMES: Record<TabType, string> = {
   healthRecord: 'HealthRecord',
 };
 
+const TAB_PDF_ENDPOINTS: Record<TabType, string> = {
+  summary: '/api/prescriptions/clinical-summary/pdf',
+  sideEffects: '/api/prescriptions/side-effects/pdf',
+  analytics: '/api/prescriptions/health-timeline/pdf',
+  healthRecord: '/api/prescriptions/case-documentation/pdf',
+};
+
 const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess, activeTab, tabData }) => {
   const theme = useTheme();
   const navigation = useNavigation();
@@ -46,60 +53,27 @@ const ClinicalSummaryHeader: React.FC<Props> = ({ isSuccess, activeTab, tabData 
       return;
     }
 
-    // For summary tab — download PDF from backend
-    if (activeTab === 'summary') {
-      setIsDownloading(true);
-      try {
-        const date = new Date();
-        const fileName = `ClinicalSummary_${Math.floor(date.getTime() / 1000)}.pdf`;
-        const fileUrl = `${Config.API_BASE_URL}/api/prescriptions/clinical-summary/pdf`;
-        const { dirs } = ReactNativeBlobUtil.fs;
-        const downloadPath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
-        ReactNativeBlobUtil.config({
-          fileCache: true,
-          addAndroidDownloads: {
-            useDownloadManager: true,
-            notification: true,
-            path: downloadPath,
-            description: 'Downloading Clinical Summary PDF',
-            mime: 'application/pdf',
-            mediaScannable: true,
-          },
-          path: downloadPath,
-        })
-          .fetch('GET', fileUrl, { Authorization: `Bearer ${token}` })
-          .then(() => {
-            successAlert('PDF downloaded successfully');
-            setIsDownloading(false);
-          })
-          .catch(() => {
-            showAlert('Failed to download PDF');
-            setIsDownloading(false);
-          });
-      } catch {
-        showAlert('Failed to start download');
-        setIsDownloading(false);
-      }
-      return;
-    }
-
+// All tabs now download a styled PDF from the backend
     setIsDownloading(true);
     try {
       const date = new Date();
       const baseName = TAB_FILENAMES[activeTab];
-      const fileName = `${baseName}_${Math.floor(date.getTime() / 1000)}.txt`;
+      const fileName = `${baseName}_${Math.floor(date.getTime() / 1000)}.pdf`;
+      const fileUrl = `${Config.API_BASE_URL}${TAB_PDF_ENDPOINTS[activeTab]}`;
       const { dirs } = ReactNativeBlobUtil.fs;
-      const filePath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
-      await ReactNativeBlobUtil.fs.writeFile(filePath, stripMarkdown(tabData), 'utf8');
-      if (Platform.OS === 'android') {
-        await ReactNativeBlobUtil.android.addCompleteDownload({
-          title: fileName,
-          description: `${baseName} downloaded`,
-          mime: 'text/plain',
-          path: filePath,
-          showNotification: true,
-        });
-      }
+      const downloadPath = `${Platform.OS === 'ios' ? dirs.DocumentDir : dirs.DownloadDir}/${fileName}`;
+      await ReactNativeBlobUtil.config({
+        fileCache: true,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          path: downloadPath,
+          description: `Downloading ${baseName} PDF`,
+          mime: 'application/pdf',
+          mediaScannable: true,
+        },
+        path: downloadPath,
+      }).fetch('GET', fileUrl, { Authorization: `Bearer ${token}` });
       successAlert(`${baseName} downloaded successfully`);
     } catch (err) {
       showAlert('Failed to download');

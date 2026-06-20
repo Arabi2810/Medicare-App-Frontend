@@ -1,5 +1,5 @@
 // src/screens/Settings/Settings.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { useTheme, useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -206,6 +206,3 @@ const useStyles = makeStyles(theme => ({
 
 export default Settings;
 
-function useEffect(arg0: () => void, arg1: never[]) {
-  throw new Error('Function not implemented.');
-}

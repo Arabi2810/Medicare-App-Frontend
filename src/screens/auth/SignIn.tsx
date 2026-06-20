@@ -19,6 +19,7 @@ import MediCareButton, { ButtonType } from '@src/components/Button/MediCareButto
 import MediCareInput from '@src/components/Input/MediCareInput';
 import { useFirebaseAuth } from '@src/hooks/useFirebaseAuth';
 import auth from '@react-native-firebase/auth';
+import { useToast } from '@src/components/Toast/ToastProvider';
 
 const SignIn = () => {
   const theme = useTheme();
@@ -33,6 +34,7 @@ const SignIn = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { showToast } = useToast();
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,17 +51,17 @@ const SignIn = () => {
   const handleForgotPassword = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!forgotEmail || !emailRegex.test(forgotEmail)) {
-      Alert.alert('Invalid', 'Enter a valid email address.');
+      showToast('Enter a valid email address.', 'warning');
       return;
     }
     try {
       setForgotLoading(true);
       await auth().sendPasswordResetEmail(forgotEmail);
-      Alert.alert('Sent', `Password reset link sent to ${forgotEmail}`);
+      showToast(`Password reset link sent to ${forgotEmail}.`, 'success');
       setShowForgotModal(false);
       setForgotEmail('');
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to send reset email');
+       showToast(e.message || 'Failed to send reset email', 'error');
     } finally {
       setForgotLoading(false);
     }

@@ -23,6 +23,7 @@ import { setAccessToken } from '@src/redux/features/user/authSlice';
 import { useAppSelector } from '@src/redux/store';
 import { useDeleteAccountMutation } from '@src/redux/features/user/userApi';
 import { logout } from '@src/redux/features/user/authSlice';
+import { apiSlice } from '@src/redux/features/api/apiSlice';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useToast } from '@src/components/Toast/ToastProvider';
 import { Alert } from 'react-native'; // only for destructive confirmations
@@ -199,11 +200,18 @@ const Profile = () => {
           style: 'destructive',
           onPress: async () => {
               try {
-                await deleteAccount({}).unwrap();
-                await auth().signOut();
-                try { await GoogleSignin.signOut(); } catch {}
-                dispatch(logout());
-                navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as never);
+          await deleteAccount({}).unwrap();
+          try {
+            await auth().currentUser?.delete();
+          } catch (e: any) {
+            // If Firebase requires recent re-auth for account deletion, this can fail.
+            console.warn('Firebase user deletion failed:', e);
+          }
+          await auth().signOut();
+          try { await GoogleSignin.signOut(); } catch {}
+          dispatch(logout());
+          dispatch(apiSlice.util.resetApiState());
+          navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as never);
               } catch {
                 showToast('Failed to delete account. Please try again.', 'error');
               }
