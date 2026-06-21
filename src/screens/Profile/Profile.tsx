@@ -26,7 +26,7 @@ import { logout } from '@src/redux/features/user/authSlice';
 import { apiSlice } from '@src/redux/features/api/apiSlice';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useToast } from '@src/components/Toast/ToastProvider';
-import { Alert } from 'react-native'; // only for destructive confirmations
+import ConfirmModal from '@src/components/ConfirmModal/ConfirmModal';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -164,7 +164,7 @@ const Profile = () => {
       await updateProfile({
         fullName,
         bloodGroup,
-        gender,
+        gender: gender || null,
         dateOfBirth,
         height,
         weight,
@@ -188,37 +188,46 @@ const Profile = () => {
     }
   };
 
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
   const handleDeleteAccount = () => {
-    // Destructive action — native Alert is appropriate here (needs explicit confirmation)
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all your prescriptions, reminders, and data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-              try {
-          await deleteAccount({}).unwrap();
-          try {
-            await auth().currentUser?.delete();
-          } catch (e: any) {
-            // If Firebase requires recent re-auth for account deletion, this can fail.
-            console.warn('Firebase user deletion failed:', e);
-          }
-          await auth().signOut();
-          try { await GoogleSignin.signOut(); } catch {}
-          dispatch(logout());
-          dispatch(apiSlice.util.resetApiState());
-          navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as never);
-              } catch {
-                showToast('Failed to delete account. Please try again.', 'error');
-              }
-            }
-        },
-      ],
-    );
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount({}).unwrap();
+    } catch (e) {
+      // Only the actual data-deletion call failing should show this error.
+      showToast('Failed to delete account. Please try again.', 'error');
+      setIsDeletingAccount(false);
+      setShowDeleteModal(false);
+      return;
+    }
+
+    // Account data is deleted at this point — everything below is cleanup.
+    // None of it should block logout or show a "failed" message.
+    try {
+      await auth().currentUser?.delete();
+    } catch (e: any) {
+      console.warn('Firebase user deletion failed:', e);
+    }
+    try {
+      await auth().signOut();
+    } catch (e) {
+      console.warn('Firebase sign-out failed:', e);
+    }
+    try {
+      await GoogleSignin.signOut();
+    } catch {}
+
+    setIsDeletingAccount(false);
+    setShowDeleteModal(false);
+    dispatch(logout());
+    dispatch(apiSlice.util.resetApiState());
+    navigation.reset({ index: 0, routes: [{ name: 'Onboarding' }] } as never);
   };
 
   const handleSendVerification = async () => {
@@ -395,16 +404,13 @@ const Profile = () => {
             </MediCareText>
             <MediCareInput label="Full Name" value={fullName} onChangeText={setFullName} placeholder="Your full name" containerStyle={styles.input} />
             <MediCareInput label="Date of Birth" value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="DD/MM/YYYY" containerStyle={styles.input} />
-            <MediCareText tag="body" weight={FontWeight.Medium} color={theme.text[110]} style={styles.label}>Gender</MediCareText>
-            <View style={styles.chipRow}>
-              {['M', 'F', 'Other'].map(g => (
-                <TouchableOpacity key={g} style={[styles.chip, gender === g && styles.chipActive]} onPress={() => setGender(g)}>
-                  <MediCareText tag="body" weight={FontWeight.Medium} color={gender === g ? theme.white : theme.text[110]}>
-                    {g === 'M' ? 'Male' : g === 'F' ? 'Female' : 'Other'}
-                  </MediCareText>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <MediCareInput
+              label="Gender"
+              value={gender || ''}
+              onChangeText={(text: string) => setGender(text)}
+              placeholder="e.g. Male, Female, Non-binary"
+              containerStyle={styles.input}
+            />
             <View style={styles.row}>
               <MediCareInput label="Height (cm)" value={height} onChangeText={setHeight} placeholder="170" keyboardType="numeric" containerStyle={[styles.input, { flex: 1, marginRight: 8 }]} />
               <MediCareInput label="Weight (kg)" value={weight} onChangeText={setWeight} placeholder="65" keyboardType="numeric" containerStyle={[styles.input, { flex: 1 }]} />
@@ -563,6 +569,16 @@ const Profile = () => {
           </View>
         </View>
       </Modal>
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Delete Account"
+        message="This will permanently delete your account and all your prescriptions, reminders, and data. This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={isDeletingAccount}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteAccount}
+      />
     </SafeAreaView>
   );
 };

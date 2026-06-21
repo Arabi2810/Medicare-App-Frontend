@@ -29,7 +29,7 @@ import { useSaveMutation } from '@src/redux/features/files/uploadFile';
 import { showError } from '@src/helper/alert';
 import { UploadPrescriptionResponse } from '@src/utils/types';
 import Checkbox from '@src/components/Input/Checkbox';
-import MediCareText from '@src/components/Text/MediCareText';
+import MediCareText, { FontWeight } from '@src/components/Text/MediCareText';
 import { useTheme } from '@react-navigation/native';
 
 interface PrescriptionFormData extends UploadPrescriptionResponse {
@@ -90,7 +90,7 @@ const handleSave = async () => {
         ...formData.patient,
         name: patientName,
         age: patientAge,
-        gender: patientGender,
+        gender: patientGender || null,
       },
       tests: formData.tests
         ?.filter((test: any) => test.name && test.name.trim().length > 0)
@@ -413,7 +413,7 @@ const handleSave = async () => {
                 label="Gender"
                 value={patientGender}
                 onChangeText={setPatientGender}
-                placeholder="e.g. Male / Female"
+                placeholder="e.g. Male, Female, Non-binary"
                 containerStyle={styles.inputContainer}
               />
             </View>

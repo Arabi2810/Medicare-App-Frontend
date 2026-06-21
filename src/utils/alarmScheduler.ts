@@ -18,23 +18,20 @@ export const scheduleAllReminderAlarms = async (reminders: any[]) => {
       ['noon', timings?.noon],
       ['night', timings?.night],
     ];
-
     for (const [slotName, timeStr] of slots) {
       if (!timeStr) continue;
       if (schedules && schedules[slotName] === false) continue;
       const [hours, minutes] = timeStr.split(':').map(Number);
       if (isNaN(hours) || isNaN(minutes)) continue;
-
       const now = new Date();
       const trigger = new Date(now);
       trigger.setHours(hours, minutes, 0, 0);
       if (trigger.getTime() <= now.getTime()) trigger.setDate(trigger.getDate() + 1);
-
       try {
         await notifee.createTriggerNotification(
           {
             id: `reminder-${reminder._id}-${slotName}`,
-            title: '🕑 Medicine Time',
+            title: 'Medicine Time',
             body: `${reminder.medicineName} - ${reminder.dosage || 'Take now'}`,
             android: {
               channelId: 'alarm_channel',

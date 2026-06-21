@@ -16,7 +16,7 @@ const Root = () => {
     dispatch(initAuth());
   }, []);
 
-  const { data: remindersData } = useGetRemindersQuery(undefined, {
+  const { data: remindersData } = useGetRemindersQuery({}, {
     skip: !hydrated || !token,
   });
 

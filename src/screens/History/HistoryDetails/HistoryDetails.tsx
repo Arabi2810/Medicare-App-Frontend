@@ -27,6 +27,7 @@ import { Prescription } from '@src/utils/types';
 import Tests from './components/Tests';
 import { useIsFocused } from '@react-navigation/native';
 import { useToast } from '@src/components/Toast/ToastProvider';
+import ConfirmModal from '@src/components/ConfirmModal/ConfirmModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HistoryDetails'>;
 
@@ -54,26 +55,21 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
     return date.toISOString().split('T')[0];
   };
 
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Prescription',
-      'Are you sure you want to delete this prescription? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deletePrescription(id).unwrap();
-              navigation.goBack();
-            } catch (err) {
-               showToast('Failed to delete prescription', 'error');
-            }
-          },
-        },
-      ]
-    );
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deletePrescription(id).unwrap();
+      setShowDeleteModal(false);
+      navigation.goBack();
+    } catch (err) {
+      setShowDeleteModal(false);
+      showToast('Failed to delete prescription', 'error');
+    }
   };
 
   const handleEdit = () => {
@@ -187,7 +183,7 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
 
           <Medicines medicines={prescription.medicines} />
           {prescription.tests && prescription.tests.length > 0 && (
-            <Tests tests={prescription.tests.map((t: any) => ({ name: t.name }))} />
+            <Tests tests={prescription.tests} />
           )}
           {/* Bottom action area */}
           <View style={styles.bottomActions}>
@@ -249,6 +245,17 @@ const HistoryDetails: React.FC<Props> = ({ route, navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Delete Prescription"
+        message="Are you sure you want to delete this prescription? This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={isDeleting}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
     </View>
   );
 };
@@ -280,9 +287,9 @@ const useStyle = makeStyles(theme => ({
     borderWidth: 1,
     borderColor: '#bfdbfe',
   },
-prescriptionImage: {
-    width: 350,
-    height: 350,
+  prescriptionImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
   },
@@ -331,8 +338,8 @@ prescriptionImage: {
 
 prescriptionImageContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
+    height: 350,
   },
   prescriptionImageContainer: {
     width: '100%',
