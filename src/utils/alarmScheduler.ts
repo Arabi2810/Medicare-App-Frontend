@@ -39,7 +39,7 @@ export const scheduleAllReminderAlarms = async (reminders: any[]) => {
               importance: 4,
               pressAction: { id: 'default' },
               loopSound: true,
-              vibrationPattern: [500, 500, 500],
+              vibrationPattern: [500, 500],
             },
           },
           {

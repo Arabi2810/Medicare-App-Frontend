@@ -38,7 +38,7 @@ async function createNotificationChannel() {
     importance: AndroidImportance.HIGH,
     sound: 'alarm_sound',
     vibration: true,
-    vibrationPattern: [500, 500, 500],
+    vibrationPattern: [500, 500],
   });
 }
 
@@ -62,10 +62,14 @@ async function displayMedicationNotification(title: string, body: string, data?:
 const AppInner: React.FC = () => {
   const [channelReady, setChannelReady] = React.useState(false);
 
-  useEffect(() => {
+useEffect(() => {
  (async () => {
-      await notifee.requestPermission();
-      await createNotificationChannel();
+      try {
+        await notifee.requestPermission();
+        await createNotificationChannel();
+      } catch (e) {
+        console.warn('Notification setup failed:', e);
+      }
       setChannelReady(true);
       if (Platform.OS === 'android' && Platform.Version >= 31) {
         const settings = await notifee.getNotificationSettings();
