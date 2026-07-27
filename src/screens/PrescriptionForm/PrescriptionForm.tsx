@@ -59,8 +59,9 @@ const PrescriptionForm: React.FC<
   const [doctorSpecialization, setDoctorSpecialization] = useState(
     prescriptionData?.doctor?.specialization || ''
   );
+// 1. Where it reads the initial value (near the top):
   const [doctorHospital, setDoctorHospital] = useState(
-    ((prescriptionData?.doctor as any)?.hospital as string) || ''
+    (prescriptionData?.doctor?.hospitalName as string) || ''   
   );
 
   // Always-visible patient fields (even if Groq didn't extract)
@@ -80,12 +81,13 @@ const handleSave = async () => {
   try {
     const dataToSave = {
       ...formData,
-      doctor: {
-        ...formData.doctor,
-        name: doctorName,
-        specialization: doctorSpecialization,
-        ...(doctorHospital ? { hospital: doctorHospital } : {}),
-      },
+    // 2. Inside handleSave(), in the doctor object being saved:
+    doctor: {
+      ...formData.doctor,
+      name: doctorName,
+      specialization: doctorSpecialization,
+      hospitalName: doctorHospital,   // was: ...(doctorHospital ? { hospital: doctorHospital } : {})
+    },
       patient: {
         ...formData.patient,
         name: patientName,

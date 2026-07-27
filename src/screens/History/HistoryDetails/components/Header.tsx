@@ -39,8 +39,13 @@ const Header: React.FC<Props> = ({ insets, doctor, isComplete, onBack }) => {
               {doctor.name || 'Unknown Doctor'}
             </MediCareText>
             <MediCareText tag="body2" color={theme.indigo[100] || '#E0E7FF'}>
-              {doctor.specialization || 'Square Hospital, Dhaka'}
+              {doctor.specialization || 'General Physician'}
             </MediCareText>
+            {doctor.hospitalName ? (
+              <MediCareText tag="body2" color={theme.indigo[100] || '#E0E7FF'}>
+                {doctor.hospitalName}
+              </MediCareText>
+            ) : null}
           </View>
 
           <View

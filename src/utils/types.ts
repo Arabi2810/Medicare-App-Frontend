@@ -3,6 +3,7 @@ export interface DoctorInfo {
   specialization: string | null;
   licenseNumber: string | null;
   contact: string | null;
+  hospitalName?: string | null;
 }
 
 export interface PatientInfo {
